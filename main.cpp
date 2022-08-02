@@ -3,10 +3,14 @@
 int main(int, char **)
 {
     crow::SimpleApp app;
+    app.loglevel(crow::LogLevel::Warning);
 
     CROW_ROUTE(app, "/")
     ([]()
-     { return "Hello world"; });
+     {
+            crow::mustache::context ctx;
+            ctx["title"] = "oRatio";
+            return crow::mustache::load("index.html").render(ctx); });
 
     app.port(8080).multithreaded().run();
 }

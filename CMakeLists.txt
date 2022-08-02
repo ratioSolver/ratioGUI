@@ -21,9 +21,9 @@ add_subdirectory(extern/plexa)
 file(GLOB RATIO_GUI_SOURCES src/*.cpp)
 file(GLOB RATIO_GUI_HEADERS include/*.h)
 
-add_executable(${PROJECT_NAME} main.cpp)
+add_executable(${PROJECT_NAME} main.cpp ${RATIO_GUI_SOURCES})
 target_include_directories(${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>/include $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>/extern/crow $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}> $<INSTALL_INTERFACE:>)
-target_link_libraries(${PROJECT_NAME} PRIVATE PlExA oRatio RiDDLe SeMiTONE ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(${PROJECT_NAME} PRIVATE PlExA oRatio ratioCore RiDDLe SeMiTONE ${CMAKE_THREAD_LIBS_INIT})
 
 if(MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE /W4)
