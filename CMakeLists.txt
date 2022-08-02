@@ -8,15 +8,14 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-include(GenerateExportHeader)
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
+
+find_package(Threads REQUIRED)
 
 include(CTest)
 enable_testing()
 
-set(JSON_BuildTests OFF CACHE INTERNAL "")
-add_subdirectory(extern/json)
 add_subdirectory(extern/plexa)
 
 file(GLOB RATIO_GUI_SOURCES src/*.cpp)
@@ -24,7 +23,7 @@ file(GLOB RATIO_GUI_HEADERS include/*.h)
 
 add_executable(${PROJECT_NAME} main.cpp)
 target_include_directories(${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>/include $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>/extern/crow $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}> $<INSTALL_INTERFACE:>)
-target_link_libraries(${PROJECT_NAME} PRIVATE PlExA oRatio RiDDLe SeMiTONE nlohmann_json::nlohmann_json)
+target_link_libraries(${PROJECT_NAME} PRIVATE PlExA oRatio RiDDLe SeMiTONE ${CMAKE_THREAD_LIBS_INIT})
 
 if(MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE /W4)
