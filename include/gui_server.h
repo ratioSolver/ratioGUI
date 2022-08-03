@@ -8,9 +8,12 @@
 
 namespace ratio::gui
 {
+  class timeline_extractor;
 
   class gui_server : public ratio::core::core_listener, public ratio::solver::solver_listener, public ratio::executor::executor_listener
   {
+    friend class timeline_extractor;
+
   public:
     gui_server(ratio::executor::executor &exec, const std::string &host = "127.0.0.1", const unsigned short port = 8080);
     ~gui_server();
@@ -66,16 +69,9 @@ namespace ratio::gui
     crow::json::wvalue to_json(const ratio::solver::flaw &f) const noexcept;
     crow::json::wvalue to_json(const ratio::solver::resolver &r) const noexcept;
 
-    static crow::json::wvalue to_json(const semitone::rational &rat);
-    static crow::json::wvalue to_json(const semitone::inf_rational &inf);
-    static crow::json::wvalue to_json(const std::pair<semitone::I, semitone::I> &pair);
-
-    static inline uintptr_t get_id(const ratio::core::item &itm) noexcept { return reinterpret_cast<uintptr_t>(&itm); }
-    static inline uintptr_t get_id(const ratio::solver::flaw &f) noexcept { return reinterpret_cast<uintptr_t>(&f); }
-    static inline uintptr_t get_id(const ratio::solver::resolver &r) noexcept { return reinterpret_cast<uintptr_t>(&r); }
-
   private:
     ratio::executor::executor &exec;
+    std::unordered_map<const ratio::core::type *, const ratio::gui::timeline_extractor *> timeline_extractors;
     std::unordered_set<const ratio::solver::flaw *> flaws;
     const ratio::solver::flaw *c_flaw = nullptr;
     std::unordered_set<const ratio::solver::resolver *> resolvers;
@@ -88,4 +84,8 @@ namespace ratio::gui
     std::unordered_set<crow::websocket::connection *> users;
     std::mutex mtx;
   };
+
+  crow::json::wvalue to_json(const semitone::rational &rat);
+  crow::json::wvalue to_json(const semitone::inf_rational &inf);
+  crow::json::wvalue to_json(const std::pair<semitone::I, semitone::I> &pair);
 } // namespace ratio::gui

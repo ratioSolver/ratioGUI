@@ -16,6 +16,8 @@ find_package(Threads REQUIRED)
 include(CTest)
 enable_testing()
 
+set(COMPUTE_NAMES ON CACHE BOOL "Computes the objects' names" FORCE)
+
 add_subdirectory(extern/plexa)
 
 file(GLOB RATIO_GUI_SOURCES src/*.cpp)

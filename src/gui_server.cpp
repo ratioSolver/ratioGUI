@@ -1,6 +1,7 @@
 #include "gui_server.h"
 #include "item.h"
 #include "predicate.h"
+#include "timeline_extractor.h"
 
 namespace ratio::gui
 {
@@ -27,8 +28,8 @@ namespace ratio::gui
                 std::vector<uintptr_t> j_executing;
                 for (const auto &atm : executing)
                     j_executing.push_back(get_id(*atm));
-                j_sc["executing"] = j_executing;
-                j_sc["time"] = to_json(current_time);
+                j_sc["executing"] = std::move(j_executing);
+                j_sc["time"] = ratio::gui::to_json(current_time);
                 conn.send_text(j_sc.dump());
 
                 crow::json::wvalue j_gr;
@@ -72,8 +73,8 @@ namespace ratio::gui
         std::vector<uintptr_t> j_executing;
         for (const auto &atm : executing)
             j_executing.push_back(get_id(*atm));
-        j_sc["executing"] = j_executing;
-        j_sc["time"] = to_json(current_time);
+        j_sc["executing"] = std::move(j_executing);
+        j_sc["time"] = ratio::gui::to_json(current_time);
 
         broadcast(j_sc.dump());
     }
@@ -100,8 +101,8 @@ namespace ratio::gui
         std::vector<uintptr_t> j_executing;
         for (const auto &atm : executing)
             j_executing.push_back(get_id(*atm));
-        j_sf["executing"] = j_executing;
-        j_sf["time"] = to_json(current_time);
+        j_sf["executing"] = std::move(j_executing);
+        j_sf["time"] = ratio::gui::to_json(current_time);
 
         broadcast(j_sf.dump());
     }
@@ -145,7 +146,7 @@ namespace ratio::gui
         crow::json::wvalue j_fcc;
         j_fcc["type"] = "flaw_cost_changed";
         j_fcc["id"] = get_id(f);
-        j_fcc["cost"] = to_json(f.get_estimated_cost());
+        j_fcc["cost"] = ratio::gui::to_json(f.get_estimated_cost());
 
         broadcast(j_fcc.dump());
     }
@@ -156,7 +157,7 @@ namespace ratio::gui
         crow::json::wvalue j_fpc;
         j_fpc["type"] = "flaw_position_changed";
         j_fpc["id"] = get_id(f);
-        j_fpc["pos"] = to_json(slv.get_idl_theory().bounds(f.get_position()));
+        j_fpc["pos"] = ratio::gui::to_json(slv.get_idl_theory().bounds(f.get_position()));
 
         broadcast(j_fpc.dump());
     }
@@ -225,7 +226,7 @@ namespace ratio::gui
 
         crow::json::wvalue j_t;
         j_t["type"] = "tick";
-        j_t["time"] = to_json(time);
+        j_t["time"] = ratio::gui::to_json(time);
 
         broadcast(j_t.dump());
     }
@@ -238,7 +239,7 @@ namespace ratio::gui
         std::vector<uintptr_t> starting;
         for (const auto &a : atoms)
             starting.push_back(get_id(*a));
-        j_st["starting"] = starting;
+        j_st["starting"] = std::move(starting);
 
         broadcast(j_st.dump());
     }
@@ -252,7 +253,7 @@ namespace ratio::gui
         std::vector<uintptr_t> start;
         for (const auto &a : atoms)
             start.push_back(get_id(*a));
-        j_st["start"] = start;
+        j_st["start"] = std::move(start);
 
         broadcast(j_st.dump());
     }
@@ -265,7 +266,7 @@ namespace ratio::gui
         std::vector<uintptr_t> ending;
         for (const auto &a : atoms)
             ending.push_back(get_id(*a));
-        j_en["ending"] = ending;
+        j_en["ending"] = std::move(ending);
 
         broadcast(j_en.dump());
     }
@@ -280,7 +281,7 @@ namespace ratio::gui
         std::vector<uintptr_t> end;
         for (const auto &a : atoms)
             end.push_back(get_id(*a));
-        j_en["end"] = end;
+        j_en["end"] = std::move(end);
 
         broadcast(j_en.dump());
     }
@@ -339,6 +340,49 @@ namespace ratio::gui
 
     crow::json::wvalue gui_server::extract_timelines() const noexcept
     {
+        std::vector<crow::json::wvalue> tls;
+
+        // for each pulse, the atoms starting at that pulse..
+        std::map<semitone::inf_rational, std::set<ratio::core::atom *>> starting_atoms;
+        // all the pulses of the timeline..
+        std::set<semitone::inf_rational> pulses;
+        for ([[maybe_unused]] const auto &[p_name, p] : slv.get_predicates())
+            if (slv.is_impulse(*p) || slv.is_interval(*p))
+                for (const auto &atm : p->get_instances())
+                    if (&atm->get_type().get_core() != &slv && slv.get_sat_core()->value(get_sigma(slv, static_cast<ratio::core::atom &>(*atm))) == semitone::True)
+                    {
+                        semitone::inf_rational start = slv.get_core().arith_value(slv.is_impulse(*p) ? static_cast<ratio::core::atom &>(*atm).get(RATIO_AT) : static_cast<ratio::core::atom &>(*atm).get(RATIO_START));
+                        starting_atoms[start].insert(dynamic_cast<ratio::core::atom *>(&*atm));
+                        pulses.insert(start);
+                    }
+        if (!starting_atoms.empty())
+        {
+            crow::json::wvalue slv_tl;
+            slv_tl["id"] = reinterpret_cast<uintptr_t>(&slv);
+            slv_tl["name"] = "solver";
+            std::vector<crow::json::wvalue> j_atms;
+            for (const auto &p : pulses)
+                for (const auto &atm : starting_atoms.at(p))
+                    j_atms.push_back(to_json(*atm));
+            slv_tl["values"] = std::move(j_atms);
+            tls.push_back(slv_tl);
+        }
+
+        std::queue<ratio::core::type *> q;
+        for ([[maybe_unused]] const auto &[tp_name, tp] : slv.get_types())
+            q.push(tp.get());
+
+        while (!q.empty())
+        {
+            if (auto tl_extr = timeline_extractors.find(q.front()); tl_extr != timeline_extractors.cend())
+                for (auto &tl : tl_extr->second->extract_timelines())
+                    tls.push_back(std::move(tl));
+            for (const auto &[tp_name, st] : q.front()->get_types())
+                q.push(st.get());
+            q.pop();
+        }
+
+        return tls;
     }
 
     crow::json::wvalue gui_server::to_json(const ratio::core::item &itm) const noexcept
@@ -364,7 +408,7 @@ namespace ratio::gui
             j_var["name"] = xpr_name;
             j_var["type"] = xpr->get_type().get_full_name();
             j_var["value"] = value(xpr);
-            j_exprs.push_back(j_var);
+            j_exprs.push_back(std::move(j_var));
         }
         return j_exprs;
     }
@@ -397,9 +441,9 @@ namespace ratio::gui
 
             j_val["lin"] = to_string(val);
             if (!is_negative_infinite(lb))
-                j_val["lb"] = to_json(lb);
+                j_val["lb"] = ratio::gui::to_json(lb);
             if (!is_positive_infinite(ub))
-                j_val["ub"] = to_json(ub);
+                j_val["ub"] = ratio::gui::to_json(ub);
             return j_val;
         }
         else if (&var->get_type() == &slv.get_time_type())
@@ -410,9 +454,9 @@ namespace ratio::gui
 
             j_val["lin"] = to_string(val);
             if (!is_negative_infinite(lb))
-                j_val["lb"] = to_json(lb);
+                j_val["lb"] = ratio::gui::to_json(lb);
             if (!is_positive_infinite(ub))
-                j_val["ub"] = to_json(ub);
+                j_val["ub"] = ratio::gui::to_json(ub);
             return j_val;
         }
         else if (&var->get_type() == &slv.get_string_type())
@@ -424,7 +468,7 @@ namespace ratio::gui
             std::vector<uintptr_t> vals;
             for (const auto &v : slv.get_ov_theory().value(ev->get_var()))
                 vals.push_back(get_id(static_cast<ratio::core::item &>(*v)));
-            j_val["vals"] = vals;
+            j_val["vals"] = std::move(vals);
             return j_val;
         }
         else
@@ -438,10 +482,15 @@ namespace ratio::gui
         std::vector<uintptr_t> causes;
         for (const auto &c : f.get_causes())
             causes.push_back(get_id(*c));
-        j_f["causes"] = causes;
+        j_f["causes"] = std::move(causes);
+        j_f["phi"] = to_string(f.get_phi());
         j_f["state"] = slv.get_sat_core()->value(f.get_phi());
-        j_f["cost"] = to_json(f.get_estimated_cost());
-        j_f["pos"] = to_json(slv.get_idl_theory().bounds(f.get_position()));
+        j_f["cost"] = ratio::gui::to_json(f.get_estimated_cost());
+        j_f["pos"] = ratio::gui::to_json(slv.get_idl_theory().bounds(f.get_position()));
+
+        auto data = crow::json::load(f.get_data());
+        for (auto &k : data.keys())
+            j_f[k] = std::move(data[k]);
 
         return j_f;
     }
@@ -452,23 +501,28 @@ namespace ratio::gui
         std::vector<uintptr_t> preconditions;
         for (const auto &p : r.get_preconditions())
             preconditions.push_back(get_id(*p));
-        j_r["preconditions"] = preconditions;
+        j_r["preconditions"] = std::move(preconditions);
         j_r["effect"] = get_id(r.get_effect());
+        j_r["rho"] = to_string(r.get_rho());
         j_r["state"] = slv.get_sat_core()->value(r.get_rho());
-        j_r["intrinsic_cost"] = to_json(r.get_intrinsic_cost());
+        j_r["intrinsic_cost"] = ratio::gui::to_json(r.get_intrinsic_cost());
+
+        auto data = crow::json::load(r.get_data());
+        for (auto &k : data.keys())
+            j_r[k] = std::move(data[k]);
 
         return j_r;
     }
 
-    crow::json::wvalue gui_server::to_json(const semitone::rational &rat) { return {{"num", rat.numerator()}, {"den", rat.denominator()}}; }
-    crow::json::wvalue gui_server::to_json(const semitone::inf_rational &inf)
+    crow::json::wvalue to_json(const semitone::rational &rat) { return {{"num", rat.numerator()}, {"den", rat.denominator()}}; }
+    crow::json::wvalue to_json(const semitone::inf_rational &inf)
     {
         crow::json::wvalue j_val = to_json(inf.get_rational());
         if (inf.get_infinitesimal() != semitone::rational::ZERO)
             j_val["inf"] = to_json(inf.get_infinitesimal());
         return j_val;
     }
-    crow::json::wvalue gui_server::to_json(const std::pair<semitone::I, semitone::I> &pair)
+    crow::json::wvalue to_json(const std::pair<semitone::I, semitone::I> &pair)
     {
         crow::json::wvalue j_p;
         if (pair.first > std::numeric_limits<semitone::I>::min())
