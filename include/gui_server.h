@@ -59,9 +59,11 @@ namespace ratio::gui
   private:
     void broadcast(const std::string &msg);
 
+  public:
     crow::json::wvalue extract_state() const noexcept;
     crow::json::wvalue extract_timelines() const noexcept;
 
+  private:
     crow::json::wvalue to_json(const ratio::core::item &itm) const noexcept;
     crow::json::wvalue to_json(const std::map<std::string, ratio::core::expr> &vars) const noexcept;
     crow::json::wvalue value(const ratio::core::expr &var) const noexcept;
