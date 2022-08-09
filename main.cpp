@@ -61,6 +61,7 @@ int main(int argc, char const *argv[])
         else
         {
             std::cout << "the problem is unsolvable..\n";
+            srv.stop();
             return 1;
         }
 
@@ -73,5 +74,7 @@ int main(int argc, char const *argv[])
     {
         std::cout << ex.what() << '\n';
     }
+
+    srv.stop();
     return 0;
 }
