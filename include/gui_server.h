@@ -66,7 +66,7 @@ namespace ratio::gui
   private:
     crow::json::wvalue to_json(const ratio::core::item &itm) const noexcept;
     crow::json::wvalue to_json(const std::map<std::string, ratio::core::expr> &vars) const noexcept;
-    crow::json::wvalue value(const ratio::core::expr &var) const noexcept;
+    crow::json::wvalue value(const ratio::core::item &var) const noexcept;
 
     crow::json::wvalue to_json(const ratio::solver::flaw &f) const noexcept;
     crow::json::wvalue to_json(const ratio::solver::resolver &r) const noexcept;

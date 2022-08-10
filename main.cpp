@@ -73,6 +73,8 @@ int main(int argc, char const *argv[])
     catch (const std::exception &ex)
     {
         std::cout << ex.what() << '\n';
+        srv.stop();
+        return 1;
     }
 
     srv.stop();

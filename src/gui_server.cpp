@@ -391,11 +391,20 @@ namespace ratio::gui
         j_itm["id"] = get_id(itm);
         j_itm["type"] = itm.get_type().get_full_name();
 #ifdef COMPUTE_NAMES
-        j_itm["name"] = slv.guess_name(itm);
+        auto name = slv.guess_name(itm);
+        if (!name.empty())
+            j_itm["name"] = name;
 #endif
         if (auto ci = dynamic_cast<const ratio::core::complex_item *>(&itm))
+        {
+            if (dynamic_cast<const ratio::core::enum_item *>(&itm))
+                j_itm["val"] = value(itm);
             if (!ci->get_vars().empty())
                 j_itm["exprs"] = to_json(ci->get_vars());
+        }
+        else
+            j_itm["value"] = value(itm);
+
         return j_itm;
     }
 
@@ -407,17 +416,17 @@ namespace ratio::gui
             crow::json::wvalue j_var;
             j_var["name"] = xpr_name;
             j_var["type"] = xpr->get_type().get_full_name();
-            j_var["value"] = value(xpr);
+            j_var["value"] = value(*xpr);
             j_exprs.push_back(std::move(j_var));
         }
         return j_exprs;
     }
-    crow::json::wvalue gui_server::value(const ratio::core::expr &var) const noexcept
+    crow::json::wvalue gui_server::value(const ratio::core::item &var) const noexcept
     {
-        if (&var->get_type() == &slv.get_bool_type())
+        if (&var.get_type() == &slv.get_bool_type())
         {
             crow::json::wvalue j_val;
-            const auto val = static_cast<ratio::core::bool_item &>(*var).get_value();
+            const auto val = static_cast<const ratio::core::bool_item &>(var).get_value();
             j_val["lit"] = (sign(val) ? "b" : "!b") + std::to_string(variable(val));
             switch (slv.get_sat_core()->value(val))
             {
@@ -433,10 +442,10 @@ namespace ratio::gui
             }
             return j_val;
         }
-        else if (&var->get_type() == &slv.get_real_type())
+        else if (&var.get_type() == &slv.get_real_type())
         {
             crow::json::wvalue j_val;
-            const auto val = static_cast<ratio::core::arith_item &>(*var).get_value();
+            const auto val = static_cast<const ratio::core::arith_item &>(var).get_value();
             const auto [lb, ub] = slv.get_lra_theory().bounds(val);
 
             j_val["lin"] = to_string(val);
@@ -446,10 +455,10 @@ namespace ratio::gui
                 j_val["ub"] = ratio::gui::to_json(ub);
             return j_val;
         }
-        else if (&var->get_type() == &slv.get_time_type())
+        else if (&var.get_type() == &slv.get_time_type())
         {
             crow::json::wvalue j_val;
-            const auto val = static_cast<ratio::core::arith_item &>(*var).get_value();
+            const auto val = static_cast<const ratio::core::arith_item &>(var).get_value();
             const auto [lb, ub] = slv.get_rdl_theory().bounds(val);
 
             j_val["lin"] = to_string(val);
@@ -459,9 +468,9 @@ namespace ratio::gui
                 j_val["ub"] = ratio::gui::to_json(ub);
             return j_val;
         }
-        else if (&var->get_type() == &slv.get_string_type())
-            return static_cast<ratio::core::string_item &>(*var).get_value();
-        else if (auto ev = dynamic_cast<ratio::core::enum_item *>(var.get()))
+        else if (&var.get_type() == &slv.get_string_type())
+            return static_cast<const ratio::core::string_item &>(var).get_value();
+        else if (auto ev = dynamic_cast<const ratio::core::enum_item *>(&var))
         {
             crow::json::wvalue j_val;
             j_val["var"] = std::to_string(ev->get_var());
@@ -472,7 +481,7 @@ namespace ratio::gui
             return j_val;
         }
         else
-            return get_id(*var);
+            return get_id(var);
     }
 
     crow::json::wvalue gui_server::to_json(const ratio::solver::flaw &f) const noexcept

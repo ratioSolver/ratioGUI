@@ -53,8 +53,8 @@ namespace ratio::gui
                 pulses.insert(start);
                 pulses.insert(end);
             }
-            pulses.insert(gs.get_solver().ratio::core::core::arith_value(gs.get_solver().ratio::core::core::get("origin")));
-            pulses.insert(gs.get_solver().ratio::core::core::arith_value(gs.get_solver().ratio::core::core::get("horizon")));
+            pulses.insert(gs.get_solver().ratio::core::core::arith_value(gs.get_solver().ratio::core::env::get("origin")));
+            pulses.insert(gs.get_solver().ratio::core::core::arith_value(gs.get_solver().ratio::core::env::get("horizon")));
 
             std::set<ratio::core::atom *> overlapping_atoms;
             std::set<semitone::inf_rational>::iterator p = pulses.begin();
