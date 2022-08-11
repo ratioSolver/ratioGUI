@@ -401,6 +401,8 @@ namespace ratio::gui
                 j_itm["val"] = value(itm);
             if (!ci->get_vars().empty())
                 j_itm["exprs"] = to_json(ci->get_vars());
+            if (auto atm = dynamic_cast<const ratio::core::atom *>(&itm))
+                j_itm["sigma"] = get_sigma(slv, *atm);
         }
         else
             j_itm["value"] = value(itm);
@@ -425,8 +427,9 @@ namespace ratio::gui
     {
         if (&var.get_type() == &slv.get_bool_type())
         {
-            crow::json::wvalue j_val;
             const auto val = static_cast<const ratio::core::bool_item &>(var).get_value();
+
+            crow::json::wvalue j_val;
             j_val["lit"] = (sign(val) ? "b" : "!b") + std::to_string(variable(val));
             switch (slv.get_sat_core()->value(val))
             {
@@ -444,11 +447,12 @@ namespace ratio::gui
         }
         else if (&var.get_type() == &slv.get_real_type())
         {
-            crow::json::wvalue j_val;
-            const auto val = static_cast<const ratio::core::arith_item &>(var).get_value();
-            const auto [lb, ub] = slv.get_lra_theory().bounds(val);
+            const auto c_lin = static_cast<const ratio::core::arith_item &>(var).get_value();
+            const auto [lb, ub] = slv.get_lra_theory().bounds(c_lin);
+            const auto val = slv.get_lra_theory().value(c_lin);
 
-            j_val["lin"] = to_string(val);
+            crow::json::wvalue j_val = ratio::gui::to_json(val);
+            j_val["lin"] = to_string(c_lin);
             if (!is_negative_infinite(lb))
                 j_val["lb"] = ratio::gui::to_json(lb);
             if (!is_positive_infinite(ub))
@@ -457,11 +461,11 @@ namespace ratio::gui
         }
         else if (&var.get_type() == &slv.get_time_type())
         {
-            crow::json::wvalue j_val;
-            const auto val = static_cast<const ratio::core::arith_item &>(var).get_value();
-            const auto [lb, ub] = slv.get_rdl_theory().bounds(val);
+            const auto c_lin = static_cast<const ratio::core::arith_item &>(var).get_value();
+            const auto [lb, ub] = slv.get_rdl_theory().bounds(c_lin);
 
-            j_val["lin"] = to_string(val);
+            crow::json::wvalue j_val = ratio::gui::to_json(lb);
+            j_val["lin"] = to_string(c_lin);
             if (!is_negative_infinite(lb))
                 j_val["lb"] = ratio::gui::to_json(lb);
             if (!is_positive_infinite(ub))
@@ -496,10 +500,7 @@ namespace ratio::gui
         j_f["state"] = slv.get_sat_core()->value(f.get_phi());
         j_f["cost"] = ratio::gui::to_json(f.get_estimated_cost());
         j_f["pos"] = ratio::gui::to_json(slv.get_idl_theory().bounds(f.get_position()));
-
-        auto data = crow::json::load(f.get_data());
-        for (auto &k : data.keys())
-            j_f[k] = std::move(data[k]);
+        j_f["data"] = crow::json::load(f.get_data());
 
         return j_f;
     }
@@ -515,10 +516,7 @@ namespace ratio::gui
         j_r["rho"] = to_string(r.get_rho());
         j_r["state"] = slv.get_sat_core()->value(r.get_rho());
         j_r["intrinsic_cost"] = ratio::gui::to_json(r.get_intrinsic_cost());
-
-        auto data = crow::json::load(r.get_data());
-        for (auto &k : data.keys())
-            j_r[k] = std::move(data[k]);
+        j_r["data"] = crow::json::load(r.get_data());
 
         return j_r;
     }

@@ -71,7 +71,7 @@ class Reasoner {
                     }
                     break;
                 }
-                case 'Agent':
+                case 'Agent': {
                     for (const atm_id of tl.values) {
                         const atm = this.atoms.get(atm_id);
                         const start_var = atm.pars.find(xpr => xpr.name == 'start');
@@ -96,7 +96,8 @@ class Reasoner {
                         }
                     }
                     break;
-                case 'ReusableResource':
+                }
+                case 'ReusableResource': {
                     const rr_atms = new Set();
                     tl.values.forEach((val, id) => {
                         vals.push({
@@ -125,7 +126,8 @@ class Reasoner {
                         });
                     }
                     break;
-                case 'ConsumableResource':
+                }
+                case 'ConsumableResource': {
                     const cr_atms = new Set();
                     tl.values.forEach((val, id) => {
                         vals.push({
@@ -154,6 +156,7 @@ class Reasoner {
                         });
                     }
                     break;
+                }
                 default:
                     break;
             }
@@ -190,15 +193,15 @@ class Reasoner {
 
         for (const f of message.flaws) {
             const flaw = {
-                type: 'flaw',
                 id: f.id,
+                phi: f.phi,
                 causes: f.causes,
                 state: f.state,
                 cost: f.cost.num / f.cost.den,
                 pos: f.pos,
                 data: f.data
             };
-            flaw.label = flaw_label(flaw);
+            flaw.label = flaw_label(this, flaw);
             flaw.title = flaw_tooltip(flaw);
             flaw.shapeProperties = { borderDashes: stroke_dasharray(flaw) };
             if (flaw.cost != Number.POSITIVE_INFINITY && max_cost < flaw.cost)
@@ -212,8 +215,8 @@ class Reasoner {
 
         for (const r of message.resolvers) {
             const resolver = {
-                type: 'resolver',
                 id: r.id,
+                rho: r.rho,
                 preconditions: r.preconditions,
                 effect: r.effect,
                 state: r.state,
@@ -221,7 +224,7 @@ class Reasoner {
                 data: r.data
             };
             resolver.cost = this.estimate_cost(resolver);
-            resolver.label = resolver_label(resolver);
+            resolver.label = resolver_label(this, resolver);
             resolver.title = resolver_tooltip(resolver);
             resolver.shape = 'box';
             resolver.shapeProperties = { borderDashes: stroke_dasharray(resolver) };
@@ -248,15 +251,15 @@ class Reasoner {
 
     flaw_created(message) {
         const flaw = {
-            type: 'flaw',
             id: message.id,
+            phi: message.phi,
             causes: message.causes,
             state: message.state,
             cost: message.cost.num / message.cost.den,
             pos: message.pos,
             data: message.data
         };
-        flaw.label = flaw_label(flaw);
+        flaw.label = flaw_label(this, flaw);
         flaw.title = flaw_tooltip(flaw);
         flaw.shapeProperties = { borderDashes: stroke_dasharray(message) };
         flaw.color = color(flaw);
@@ -337,8 +340,8 @@ class Reasoner {
             this.nodes.update(all_nodes);
         }
         const resolver = {
-            type: 'resolver',
             id: message.id,
+            rho: message.rho,
             preconditions: message.preconditions,
             effect: message.effect,
             state: message.state,
@@ -346,7 +349,7 @@ class Reasoner {
             data: message.data
         };
         resolver.cost = this.estimate_cost(resolver);
-        resolver.label = resolver_label(resolver);
+        resolver.label = resolver_label(this, resolver);
         resolver.title = resolver_tooltip(resolver);
         resolver.shape = 'box';
         resolver.shapeProperties = { borderDashes: stroke_dasharray(resolver) };
@@ -486,38 +489,38 @@ function stroke_dasharray(n) {
     }
 }
 
-function flaw_label(flaw) {
+function flaw_label(graph, flaw) {
     switch (flaw.data.type) {
         case 'fact':
-            return 'fact \u03C3' + flaw.data.sigma + ' ' + flaw.data.predicate;
+            return 'fact \u03C3' + graph.atoms.get(flaw.data.atom).sigma + ' ' + graph.atoms.get(flaw.data.atom).type;
         case 'goal':
-            return 'goal \u03C3' + flaw.data.sigma + ' ' + flaw.data.predicate;
+            return 'goal \u03C3' + graph.atoms.get(flaw.data.atom).sigma + ' ' + graph.atoms.get(flaw.data.atom).type;
         case 'enum':
             return 'enum';
         case 'bool':
             return 'bool';
         default:
-            switch (flaw.data.phi) {
+            switch (flaw.phi) {
                 case 'b0':
                 case '\u00ACb0':
                     return flaw.data.type;
                 default:
-                    return flaw.data.phi.replace('b', '\u03C6') + ' ' + flaw.data.type;
+                    return flaw.phi.replace('b', '\u03C6') + ' ' + flaw.data.type;
             }
     }
 }
 
 function flaw_tooltip(flaw) {
-    switch (flaw.data.phi) {
+    switch (flaw.phi) {
         case 'b0':
         case '\u00ACb0':
             return 'cost: ' + flaw.cost + ', pos: ' + flaw.pos.lb;
         default:
-            return flaw.data.phi.replace('b', '\u03C6') + ', cost: ' + flaw.cost + ', pos: ' + flaw.pos.lb;
+            return flaw.phi.replace('b', '\u03C6') + ', cost: ' + flaw.cost + ', pos: ' + flaw.pos.lb;
     }
 }
 
-function resolver_label(resolver) {
+function resolver_label(graph, resolver) {
     if (resolver.data.type)
         switch (resolver.data.type) {
             case 'activate':
@@ -525,32 +528,35 @@ function resolver_label(resolver) {
             case 'unify':
                 return 'unify';
             case 'assignment':
-                return resolver.data.val;
+                if (graph.items.get(resolver.data.val).value)
+                    return graph.items.get(resolver.data.val).value;
+                else
+                    return graph.items.get(resolver.data.val).name;
             default:
-                switch (resolver.data.rho) {
+                switch (resolver.rho) {
                     case 'b0':
                     case '\u00ACb0':
                         return resolver.data.type;
                     default:
-                        return resolver.data.rho.replace('b', '\u03C1') + ' ' + resolver.data.type;
+                        return resolver.rho.replace('b', '\u03C1') + ' ' + resolver.data.type;
                 }
         }
-    switch (resolver.data.rho) {
+    switch (resolver.rho) {
         case 'b0':
             return '\u22A4';
         case '\u00ACb0':
             return '\u22A5';
         default:
-            return resolver.data.rho.replace('b', '\u03C1');
+            return resolver.rho.replace('b', '\u03C1');
     }
 }
 
 function resolver_tooltip(resolver) {
-    switch (resolver.data.rho) {
+    switch (resolver.rho) {
         case 'b0':
         case '\u00ACb0':
             return 'cost: ' + resolver.cost;
         default:
-            return resolver.data.rho.replace('b', '\u03C1') + ', cost: ' + resolver.cost;
+            return resolver.rho.replace('b', '\u03C1') + ', cost: ' + resolver.cost;
     }
 }

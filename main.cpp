@@ -38,7 +38,7 @@ int main(int argc, char const *argv[])
 
     ratio::solver::solver s;
     ratio::executor::executor exec(s);
-    ratio::gui::gui_server srv(exec);
+    ratio::gui::gui_server srv(exec, LOCALHOST_ADDRESS);
     ratio::gui::agnt_timeline_extractor agnt_te(srv);
     ratio::gui::sv_timeline_extractor sv_te(srv);
     ratio::gui::rr_timeline_extractor rr_te(srv);
