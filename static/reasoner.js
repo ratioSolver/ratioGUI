@@ -33,6 +33,8 @@ class Reasoner {
         this.items.clear(); if (message.state.items) for (const itm of message.state.items) this.items.set(parseInt(itm.id), itm);
         this.atoms.clear(); if (message.state.atoms) for (const atm of message.state.atoms) this.atoms.set(parseInt(atm.id), atm);
         this.executing_tasks.clear();
+        this.timelines.clear();
+        this.timeline_values.clear();
         this.timelines.update(message.timelines.map(tl => { return { id: tl.id, content: tl.name } }));
         const origin_var = message.state.exprs.find(xpr => xpr.name == 'origin');
         const horizon_var = message.state.exprs.find(xpr => xpr.name == 'horizon');
@@ -58,8 +60,8 @@ class Reasoner {
                     });
                     for (const atm_id of sv_atms) {
                         const atm = this.atoms.get(atm_id);
-                        const start_var = atm.pars.find(xpr => xpr.name == 'start');
-                        const end_var = atm.pars.find(xpr => xpr.name == 'end');
+                        const start_var = atm.exprs.find(xpr => xpr.name == 'start');
+                        const end_var = atm.exprs.find(xpr => xpr.name == 'end');
                         vals.push({
                             id: '' + atm.id,
                             content: this.atom_content(atm),
@@ -74,9 +76,9 @@ class Reasoner {
                 case 'Agent': {
                     for (const atm_id of tl.values) {
                         const atm = this.atoms.get(atm_id);
-                        const start_var = atm.pars.find(xpr => xpr.name == 'start');
+                        const start_var = atm.exprs.find(xpr => xpr.name == 'start');
                         if (start_var) {
-                            const end_var = atm.pars.find(xpr => xpr.name == 'end');
+                            const end_var = atm.exprs.find(xpr => xpr.name == 'end');
                             vals.push({
                                 id: '' + atm.id,
                                 content: this.atom_content(atm),
@@ -86,7 +88,7 @@ class Reasoner {
                                 group: tl.id
                             });
                         } else {
-                            const at_var = atm.pars.find(xpr => xpr.name == 'at');
+                            const at_var = atm.exprs.find(xpr => xpr.name == 'at');
                             vals.push({
                                 id: '' + atm.id,
                                 content: this.atom_content(atm),
@@ -114,8 +116,8 @@ class Reasoner {
                     });
                     for (const atm_id of rr_atms) {
                         const atm = this.atoms.get(atm_id);
-                        const start_var = atm.pars.find(xpr => xpr.name == 'start');
-                        const end_var = atm.pars.find(xpr => xpr.name == 'end');
+                        const start_var = atm.exprs.find(xpr => xpr.name == 'start');
+                        const end_var = atm.exprs.find(xpr => xpr.name == 'end');
                         vals.push({
                             id: '' + atm.id,
                             content: this.atom_content(atm),
@@ -144,8 +146,8 @@ class Reasoner {
                     });
                     for (const atm_id of cr_atms) {
                         const atm = this.atoms.get(atm_id);
-                        const start_var = atm.pars.find(xpr => xpr.name == 'start');
-                        const end_var = atm.pars.find(xpr => xpr.name == 'end');
+                        const start_var = atm.exprs.find(xpr => xpr.name == 'start');
+                        const end_var = atm.exprs.find(xpr => xpr.name == 'end');
                         vals.push({
                             id: '' + atm.id,
                             content: this.atom_content(atm),
@@ -420,9 +422,9 @@ class Reasoner {
         this.timeline.setSelection(Array.from(this.executing_tasks), { animate: animation });
     }
 
-    atom_content(atm) { return atm.predicate + '(' + atm.pars.filter(par => par.name != 'start' && par.name != 'end' && par.name != 'duration' && par.name != 'tau').map(par => par.name).sort().join(', ') + ')'; }
+    atom_content(atm) { return atm.type + '(' + atm.exprs.filter(par => par.name != 'start' && par.name != 'end' && par.name != 'duration' && par.name != 'tau').map(par => par.name).sort().join(', ') + ')'; }
 
-    atom_title(atm) { return '\u03C3' + atm.sigma + ' ' + atm.predicate + '(' + atm.pars.filter(par => par.name != 'tau').map(par => '<br>' + this.par_to_string(par)).sort().join(',') + '<br>)'; }
+    atom_title(atm) { return '\u03C3' + atm.sigma + ' ' + atm.type + '(' + atm.exprs.filter(par => par.name != 'tau').map(par => '<br>' + this.par_to_string(par)).sort().join(',') + '<br>)'; }
 
     par_to_string(par) {
         switch (par.type) {

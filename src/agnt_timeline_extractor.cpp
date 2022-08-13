@@ -11,15 +11,17 @@ namespace ratio::gui
         std::vector<crow::json::wvalue> tls;
         // we partition atoms for each agent they might insist on..
         std::unordered_map<const ratio::core::item *, std::vector<ratio::core::atom *>> agnt_instances;
+        for (auto &agnt_instance : tp.get_instances())
+            agnt_instances[&*agnt_instance];
         for (const auto &atm : static_cast<const ratio::solver::agent &>(tp).get_atoms())
             if (gs.get_solver().get_sat_core()->value(get_sigma(gs.get_solver(), *atm)) == semitone::True) // we filter out those which are not strictly active..
             {
                 const auto c_scope = atm->get(TAU_KW);
                 if (const auto enum_scope = dynamic_cast<ratio::core::enum_item *>(&*c_scope))
                     for (const auto &val : gs.get_solver().get_ov_theory().value(enum_scope->get_var()))
-                        agnt_instances[static_cast<const ratio::core::item *>(val)].emplace_back(atm);
+                        agnt_instances.at(static_cast<const ratio::core::item *>(val)).emplace_back(atm);
                 else
-                    agnt_instances[static_cast<ratio::core::item *>(&*c_scope)].emplace_back(atm);
+                    agnt_instances.at(static_cast<ratio::core::item *>(&*c_scope)).emplace_back(atm);
             }
 
         for (const auto &[agnt, atms] : agnt_instances)

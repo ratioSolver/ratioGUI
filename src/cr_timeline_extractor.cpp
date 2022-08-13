@@ -11,15 +11,17 @@ namespace ratio::gui
         std::vector<crow::json::wvalue> tls;
         // we partition atoms for each consumable-resource they might insist on..
         std::unordered_map<ratio::core::item *, std::vector<ratio::core::atom *>> cr_instances;
+        for (auto &cr_instance : tp.get_instances())
+            cr_instances[&*cr_instance];
         for (const auto &atm : static_cast<const ratio::solver::consumable_resource &>(tp).get_atoms())
             if (gs.get_solver().get_sat_core()->value(get_sigma(gs.get_solver(), *atm)) == semitone::True) // we filter out those which are not strictly active..
             {
                 const auto c_scope = atm->get(TAU_KW);
                 if (const auto enum_scope = dynamic_cast<ratio::core::enum_item *>(&*c_scope))
                     for (const auto &val : gs.get_solver().get_ov_theory().value(enum_scope->get_var()))
-                        cr_instances[static_cast<ratio::core::item *>(val)].emplace_back(atm);
+                        cr_instances.at(static_cast<ratio::core::item *>(val)).emplace_back(atm);
                 else
-                    cr_instances[static_cast<ratio::core::item *>(&*c_scope)].emplace_back(atm);
+                    cr_instances.at(static_cast<ratio::core::item *>(&*c_scope)).emplace_back(atm);
             }
 
         for (const auto &[cr, atms] : cr_instances)
