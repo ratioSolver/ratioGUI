@@ -25,7 +25,7 @@ int main(int argc, char const *argv[])
 #ifdef NDEBUG
     if (std::ifstream(sol_name).good())
     {
-        std::cout << "The solution file '" << sol_name << "' already exists! Please, specify a different solution file..";
+        std::cout << "The solution file `" << sol_name << "` already exists! Please, specify a different solution file..";
         return -1;
     }
 #endif
