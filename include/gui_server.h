@@ -59,18 +59,6 @@ namespace ratio::gui
   private:
     void broadcast(const std::string &msg);
 
-  public:
-    crow::json::wvalue extract_state() const noexcept;
-    crow::json::wvalue extract_timelines() const noexcept;
-
-  private:
-    crow::json::wvalue to_json(const ratio::core::item &itm) const noexcept;
-    crow::json::wvalue to_json(const std::map<std::string, ratio::core::expr> &vars) const noexcept;
-    crow::json::wvalue value(const ratio::core::item &var) const noexcept;
-
-    crow::json::wvalue to_json(const ratio::solver::flaw &f) const noexcept;
-    crow::json::wvalue to_json(const ratio::solver::resolver &r) const noexcept;
-
   private:
     ratio::executor::executor &exec;
     std::unordered_map<const ratio::core::type *, const ratio::gui::timeline_extractor *> timeline_extractors;
@@ -86,8 +74,4 @@ namespace ratio::gui
     std::unordered_set<crow::websocket::connection *> users;
     std::mutex mtx;
   };
-
-  crow::json::wvalue to_json(const semitone::rational &rat);
-  crow::json::wvalue to_json(const semitone::inf_rational &inf);
-  crow::json::wvalue to_json(const std::pair<semitone::I, semitone::I> &pair);
 } // namespace ratio::gui

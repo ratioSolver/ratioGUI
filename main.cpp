@@ -1,8 +1,4 @@
 #include "gui_server.h"
-#include "agnt_timeline_extractor.h"
-#include "sv_timeline_extractor.h"
-#include "rr_timeline_extractor.h"
-#include "cr_timeline_extractor.h"
 
 #define LOCALHOST_ADDRESS "127.0.0.1"
 
@@ -39,10 +35,6 @@ int main(int argc, char const *argv[])
     ratio::solver::solver s;
     ratio::executor::executor exec(s);
     ratio::gui::gui_server srv(exec, LOCALHOST_ADDRESS);
-    ratio::gui::agnt_timeline_extractor agnt_te(srv);
-    ratio::gui::sv_timeline_extractor sv_te(srv);
-    ratio::gui::rr_timeline_extractor rr_te(srv);
-    ratio::gui::cr_timeline_extractor cr_te(srv);
 
     auto srv_st = std::async(std::launch::async, [&]
                              { srv.start(); });
@@ -67,7 +59,7 @@ int main(int argc, char const *argv[])
 
         std::ofstream sol_file;
         sol_file.open(sol_name);
-        sol_file << srv.extract_state().dump();
+        sol_file << ratio::solver::to_json(s).dump();
         sol_file.close();
     }
     catch (const std::exception &ex)
