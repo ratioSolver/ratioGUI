@@ -364,6 +364,8 @@ class Reasoner {
         const resolver = this.nodes.get(message.id);
         resolver.state = message.state;
         resolver.shapeProperties.borderDashes = stroke_dasharray(resolver);
+        resolver.cost = this.estimate_cost(resolver);
+        resolver.title = resolver_tooltip(resolver);
         resolver.color = color(resolver);
         this.nodes.update(resolver);
         const c_edges = this.network.getConnectedEdges(message.id);
@@ -383,12 +385,18 @@ class Reasoner {
     causal_link_added(message) {
         const flaw = this.nodes.get(message.flaw_id);
         const resolver = this.nodes.get(message.resolver_id);
-        resolver.preconditions.push(flaw);
+        resolver.preconditions.push(flaw.id);
+        flaw.causes.push(resolver.id);
         this.edges.add({ from: message.flaw_id, to: message.resolver_id, arrows: { to: true }, dashes: stroke_dasharray(resolver) });
+        resolver.cost = this.estimate_cost(resolver);
+        resolver.title = resolver_tooltip(resolver);
+        resolver.color = color(resolver);
+        this.nodes.update(resolver);
     }
 
     estimate_cost(res) {
-        return (res.preconditions ? Math.max.apply(Math, res.preconditions.map(f_id => this.nodes.get(f_id).cost)) : 0) + res.intrinsic_cost;
+        if (!res.state) return Number.POSITIVE_INFINITY;
+        return (res.preconditions.length ? Math.max.apply(this, res.preconditions.map(f_id => this.nodes.get(f_id).cost)) : 0) + res.intrinsic_cost;
     }
 
     starting(message) {
@@ -494,9 +502,9 @@ function stroke_dasharray(n) {
 function flaw_label(graph, flaw) {
     switch (flaw.data.type) {
         case 'fact':
-            return 'fact \u03C3' + graph.atoms.get(flaw.data.atom).sigma + ' ' + graph.atoms.get(flaw.data.atom).type;
+            return 'fact \u03C3' + flaw.data.atom.sigma + ' ' + flaw.data.atom.type;
         case 'goal':
-            return 'goal \u03C3' + graph.atoms.get(flaw.data.atom).sigma + ' ' + graph.atoms.get(flaw.data.atom).type;
+            return 'goal \u03C3' + flaw.data.atom.sigma + ' ' + flaw.data.atom.type;
         case 'enum':
             return 'enum';
         case 'bool':
@@ -530,10 +538,22 @@ function resolver_label(graph, resolver) {
             case 'unify':
                 return 'unify';
             case 'assignment':
-                if (graph.items.get(resolver.data.val).value)
-                    return graph.items.get(resolver.data.val).value;
+                if (resolver.data.name)
+                    return resolver.data.name;
+                else if (resolver.data.value.lit)
+                    return resolver.data.value.val;
+                else if (resolver.data.value.lin) {
+                    const lb = resolver.data.value.lb ? resolver.data.value.lb.num / resolver.data.value.lb.den : Number.NEGATIVE_INFINITY;
+                    const ub = resolver.data.value.ub ? resolver.data.value.ub.num / resolver.data.value.ub.den : Number.POSITIVE_INFINITY;
+                    if (lb == ub)
+                        return resolver.data.value.num / resolver.data.value.den;
+                    else
+                        return resolver.data.value.num / resolver.data.value.den + ' [' + lb + ', ' + ub + ']';
+                }
+                else if (resolver.data.value.var)
+                    return JSON.stringify(resolver.data.value.vals);
                 else
-                    return graph.items.get(resolver.data.val).name;
+                    return resolver.data.value;
             default:
                 switch (resolver.rho) {
                     case 'b0':

@@ -124,6 +124,23 @@ namespace ratio::gui
 
         json::json j_fc;
         j_fc["type"] = "flaw_created";
+        j_fc["id"] = get_id(f);
+        j_fc["phi"] = to_string(f.get_phi());
+        json::array j_causes;
+        j_causes.reserve(f.get_causes().size());
+        for (const auto &c : f.get_causes())
+            j_causes.push_back(get_id(*c));
+        j_fc["causes"] = std::move(j_causes);
+        j_fc["state"] = slv.get_sat_core()->value(f.get_phi());
+        j_fc["cost"] = to_json(f.get_estimated_cost());
+        auto [lb, ub] = f.get_solver().get_idl_theory().bounds(f.get_position());
+        json::json j_pos;
+        if (lb > std::numeric_limits<semitone::I>::min())
+            j_pos["lb"] = lb;
+        if (ub > std::numeric_limits<semitone::I>::max())
+            j_pos["ub"] = ub;
+        j_fc["pos"] = std::move(j_pos);
+        j_fc["data"] = f.get_data();
 
         broadcast(j_fc.dump());
     }
@@ -186,6 +203,17 @@ namespace ratio::gui
 
         json::json j_rc;
         j_rc["type"] = "resolver_created";
+        j_rc["id"] = get_id(r);
+        j_rc["rho"] = to_string(r.get_rho());
+        json::array j_preconditions;
+        j_preconditions.reserve(r.get_preconditions().size());
+        for (const auto &pre : r.get_preconditions())
+            j_preconditions.push_back(get_id(*pre));
+        j_rc["preconditions"] = std::move(j_preconditions);
+        j_rc["effect"] = get_id(r.get_effect());
+        j_rc["state"] = slv.get_sat_core()->value(r.get_rho());
+        j_rc["intrinsic_cost"] = to_json(r.get_intrinsic_cost());
+        j_rc["data"] = r.get_data();
 
         broadcast(j_rc.dump());
     }
@@ -217,7 +245,7 @@ namespace ratio::gui
         std::lock_guard<std::mutex> _(mtx);
 
         json::json j_cla;
-        j_cla["type"] = "current_resolver";
+        j_cla["type"] = "causal_link_added";
         j_cla["flaw_id"] = get_id(f);
         j_cla["resolver_id"] = get_id(r);
 
