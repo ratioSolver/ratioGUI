@@ -60,7 +60,6 @@ namespace ratio::gui
 
   private:
     ratio::executor::executor &exec;
-    std::unordered_map<const ratio::core::type *, const ratio::gui::timeline_extractor *> timeline_extractors;
     std::unordered_set<const ratio::solver::flaw *> flaws;
     const ratio::solver::flaw *c_flaw = nullptr;
     std::unordered_set<const ratio::solver::resolver *> resolvers;
