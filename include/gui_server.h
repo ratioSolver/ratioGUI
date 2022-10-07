@@ -16,7 +16,6 @@ namespace ratio::gui
 
   public:
     gui_server(ratio::executor::executor &exec, const std::string &host = "127.0.0.1", const unsigned short port = 8080);
-    ~gui_server();
 
     ratio::solver::solver &get_solver() { return slv; }
     ratio::executor::executor &get_executor() { return exec; }

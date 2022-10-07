@@ -51,7 +51,6 @@ namespace ratio::gui
             .onmessage([&]([[maybe_unused]] crow::websocket::connection &conn, [[maybe_unused]] const std::string &data, [[maybe_unused]] bool is_binary)
                        { if(data == "tick") exec.tick(); });
     }
-    gui_server::~gui_server() {}
 
     void gui_server::start() { app.bindaddr(host).port(port).run(); }
     void gui_server::wait_for_server_start() { app.wait_for_server_start(); }
