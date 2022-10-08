@@ -1,6 +1,6 @@
 document.querySelector('#tick').addEventListener('click', () => ws.send('tick'));
 
-const reasoner = new Reasoner(document.getElementById('timelines'), document.getElementById('graph'));
+const reasoner = new ReasonerD3();
 
 let ws;
 setup_ws();
