@@ -11,8 +11,8 @@ class ReasonerD3 extends Reasoner {
 
         this.graph_g = svg.append('g');
 
-        const graph_zoom = d3.zoom().on('zoom', event => this.graph_g.attr('transform', event.transform));
-        svg.call(graph_zoom);
+        this.graph_zoom = d3.zoom().on('zoom', event => this.graph_g.attr('transform', event.transform));
+        svg.call(this.graph_zoom);
 
         svg.append('svg:defs').append('svg:marker')
             .attr('id', 'triangle')
@@ -43,11 +43,14 @@ class ReasonerD3 extends Reasoner {
     }
 
     solution_found() {
-        super.solution_found(message);
+        if (this.current_flaw) this.current_flaw.current = false;
+        if (this.current_resolver) this.current_resolver.current = false;
+        super.solution_found();
+        this.update_graph();
     }
 
     inconsistent_problem() {
-        super.inconsistent_problem(message);
+        super.inconsistent_problem();
     }
 
     tick(message) {
@@ -56,6 +59,60 @@ class ReasonerD3 extends Reasoner {
 
     graph(message) {
         super.graph(message);
+        this.update_graph();
+    }
+
+    flaw_created(message) {
+        super.flaw_created(message);
+        this.update_graph();
+    }
+
+    flaw_state_changed(message) {
+        super.flaw_state_changed(message);
+        this.update_graph();
+    }
+
+    flaw_cost_changed(message) {
+        super.flaw_cost_changed(message);
+        this.update_graph();
+    }
+
+    flaw_position_changed(message) {
+        super.flaw_position_changed(message);
+        this.update_graph();
+    }
+
+    current_flaw_changed(message) {
+        if (this.current_flaw) {
+            this.current_flaw.current = false;
+            if (this.current_resolver)
+                this.current_resolver.current = false;
+        }
+        super.current_flaw_changed(message);
+        this.current_flaw.current = true;
+        this.update_graph();
+        this.graph_g.transition().call(this.graph_zoom.translateTo, this.current_flaw.x, this.current_flaw.y);
+    }
+
+    resolver_created(message) {
+        super.resolver_created(message);
+        this.update_graph();
+    }
+
+    resolver_state_changed(message) {
+        super.resolver_state_changed(message);
+        this.update_graph();
+    }
+
+    current_resolver_changed(message) {
+        super.current_resolver_changed(message);
+        this.current_resolver.current = true;
+        this.update_graph();
+        this.graph_g.transition().call(this.graph_zoom.translateTo, this.current_resolver.x, this.current_resolver.y);
+    }
+
+    causal_link_added(message) {
+        super.causal_link_added(message);
         this.update_graph();
     }
 
@@ -95,22 +152,9 @@ class ReasonerD3 extends Reasoner {
                     .on('click', (event, d) => { d.fx = null; d.fy = null; });
 
                 g.call(d3.drag()
-                    .on('start', (event, d) => {
-                        if (!event.active) this.simulation.alphaTarget(0.3).restart();
-                        var current = d3.select(this);
-                        g.attr('cursor', 'grabbing');
-                    })
-                    .on('drag', (event, d) => {
-                        d.fx = event.x;
-                        d.fy = event.y;
-                        this.tooltip.style('left', (event.x + deltaX) + 'px').style('top', (event.y + deltaY - 28) + 'px');
-                    })
-                    .on('end', (event, d) => {
-                        if (!event.active) this.simulation.alphaTarget(0);
-                        d.fx = d.x;
-                        d.fy = d.y;
-                        g.attr('cursor', 'grab');
-                    }));
+                    .on('start', drag_started)
+                    .on('drag', dragging)
+                    .on('end', drag_ended));
 
                 return g;
             },
@@ -130,7 +174,7 @@ class ReasonerD3 extends Reasoner {
 
         const l_group = this.graph_g.selectAll('line').data(links).join(
             enter => {
-                return enter.append('line').attr('stroke', 'dimgray').style('stroke-dasharray', d => stroke_dasharray(d.resolver));
+                return enter.append('line').attr('stroke', 'dimgray').style('stroke-dasharray', d => stroke_dasharray(d));
             },
             update => {
                 update.style('stroke-dasharray', d => stroke_dasharray(d));
@@ -184,6 +228,8 @@ function stroke_width(n) {
 }
 
 function stroke_dasharray(n) {
+    if (!n)
+        console.log('here..');
     switch (n.state) {
         case 0: // False
             return '1';
@@ -228,4 +274,22 @@ function intersection(p0, p1, p2, p3) {
         return { x: p0.x + (t * s1_x), y: p0.y + (t * s1_y) };
     else
         return undefined;
+}
+
+function drag_started(event, d) {
+    if (!event.active) d.reasoner.simulation.alphaTarget(0.3).restart();
+    d3.select(this).attr('cursor', 'grabbing');
+}
+
+function dragging(event, d) {
+    d.fx = event.x;
+    d.fy = event.y;
+    d.reasoner.tooltip.style('left', (event.sourceEvent.pageX) + 'px').style('top', (event.sourceEvent.pageY - 28) + 'px');
+}
+
+function drag_ended(event, d) {
+    if (!event.active) d.reasoner.simulation.alphaTarget(0);
+    d.fx = d.x;
+    d.fy = d.y;
+    d3.select(this).attr('cursor', 'grab');
 }

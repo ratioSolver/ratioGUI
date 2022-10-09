@@ -50,6 +50,7 @@ class Reasoner {
 
         for (const f of message.flaws) {
             const flaw = {
+                reasoner: this,
                 id: f.id,
                 phi: f.phi,
                 causes: f.causes,
@@ -65,6 +66,7 @@ class Reasoner {
 
         for (const r of message.resolvers) {
             const resolver = {
+                reasoner: this,
                 id: r.id,
                 rho: r.rho,
                 preconditions: r.preconditions,
@@ -72,49 +74,131 @@ class Reasoner {
                 state: r.state,
                 intrinsic_cost: r.intrinsic_cost.num / r.intrinsic_cost.den,
                 data: r.data,
+                edges: []
             };
             resolver.cost = this.estimate_cost(resolver);
             resolver.label = this.resolver_label(resolver);
             resolver.title = this.resolver_tooltip(resolver);
             this.nodes.set(resolver.id, resolver);
 
-            this.edges.add({ from: r.id, to: r.effect, resolver: resolver });
-            for (const f of resolver.preconditions)
-                this.edges.add({ from: f, to: resolver.id, resolver: resolver });
+            const eff_edge = { from: r.id, to: r.effect, state: resolver.state };
+            this.edges.add(eff_edge);
+            resolver.edges.push(eff_edge);
+            for (const f of resolver.preconditions) {
+                const prec_edge = { from: f, to: resolver.id, state: resolver.state };
+                resolver.edges.push(prec_edge);
+            }
         }
 
         if (message.current_flaw) {
-            this.current_flaw = message.current_flaw;
+            this.current_flaw = this.nodes.get(message.current_flaw);
             if (message.current_resolver)
-                this.current_resolver = message.current_resolver;
+                this.current_resolver = this.nodes.get(message.current_resolver);
         }
     }
 
     flaw_created(message) {
+        const flaw = {
+            reasoner: this,
+            id: message.id,
+            phi: message.phi,
+            causes: message.causes,
+            state: message.state,
+            cost: message.cost.num / message.cost.den,
+            pos: message.pos,
+            data: message.data
+        };
+        flaw.label = this.flaw_label(flaw);
+        flaw.title = this.flaw_tooltip(flaw);
+        this.nodes.set(flaw.id, flaw);
+        for (const c_id of flaw.causes) {
+            const cause = this.nodes.get(c_id);
+            cause.preconditions.push(flaw.id);
+            const c_res_cost = this.estimate_cost(cause);
+            if (cause.cost != c_res_cost) {
+                cause.cost = c_res_cost;
+                cause.title = this.resolver_tooltip(cause);
+            }
+            const cause_edge = { from: flaw.id, to: cause.id, state: cause.state };
+            this.edges.add(cause_edge);
+            cause.edges.push(cause_edge);
+        }
     }
 
     flaw_state_changed(message) {
+        const flaw = this.nodes.get(message.id);
+        flaw.state = message.state;
     }
 
     flaw_cost_changed(message) {
+        const flaw = this.nodes.get(message.id);
+        flaw.cost = message.cost.num / message.cost.den;
+        flaw.title = this.flaw_tooltip(flaw);
+
+        for (const c_id of flaw.causes) {
+            const cause = this.nodes.get(c_id);
+            const c_res_cost = this.estimate_cost(cause);
+            if (cause.cost != c_res_cost) {
+                cause.cost = c_res_cost;
+                cause.title = this.resolver_tooltip(cause);
+            }
+        }
     }
 
     flaw_position_changed(message) {
+        const flaw = this.nodes.get(message.id);
+        flaw.pos = message.pos;
+        flaw.title = this.flaw_tooltip(flaw);
     }
 
     current_flaw_changed(message) {
+        this.current_flaw = this.nodes.get(message.id);
+        this.current_resolver = undefined;
     }
 
     resolver_created(message) {
+        const resolver = {
+            reasoner: this,
+            id: message.id,
+            rho: message.rho,
+            preconditions: message.preconditions,
+            effect: message.effect,
+            state: message.state,
+            intrinsic_cost: message.intrinsic_cost.num / message.intrinsic_cost.den,
+            data: message.data,
+            edges: []
+        };
+        resolver.cost = this.estimate_cost(resolver);
+        resolver.label = this.resolver_label(resolver);
+        resolver.title = this.resolver_tooltip(resolver);
+        this.nodes.set(resolver.id, resolver);
+        const eff_edge = { from: message.id, to: message.effect, state: resolver.state };
+        this.edges.add(eff_edge);
+        resolver.edges.push(eff_edge);
     }
 
     resolver_state_changed(message) {
+        const resolver = this.nodes.get(message.id);
+        resolver.state = message.state;
+        resolver.cost = this.estimate_cost(resolver);
+        resolver.title = this.resolver_tooltip(resolver);
+        for (const edge of resolver.edges) {
+            edge.state = resolver.state;
+        }
     }
 
     current_resolver_changed(message) {
+        this.current_resolver = this.nodes.get(message.id);
     }
 
     causal_link_added(message) {
+        const flaw = this.nodes.get(message.flaw_id);
+        const resolver = this.nodes.get(message.resolver_id);
+        resolver.preconditions.push(flaw.id);
+        flaw.causes.push(resolver.id);
+        this.edges.add({ from: message.flaw_id, to: message.resolver_id, resolver: resolver });
+        resolver.cost = this.estimate_cost(resolver);
+        resolver.title = this.resolver_tooltip(resolver);
     }
 
     estimate_cost(res) {
