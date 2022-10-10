@@ -146,7 +146,7 @@ class ReasonerD3 extends Reasoner {
         this.timelines_y_scale.domain(d3.range(this.timelines.size));
 
         const timelines = Array.from(this.timelines.values());
-        this.timelines_g.selectAll('g.timeline').data(timelines, d => d.id).join(
+        this.timelines_g.selectAll('g.timeline').data(timelines).join(
             enter => {
                 const tl_g = enter.append('g')
                     .attr('class', 'timeline')
@@ -160,7 +160,7 @@ class ReasonerD3 extends Reasoner {
                 tl_g.append('text')
                     .attr('x', 0)
                     .attr('y', d => this.timelines_y_scale(timelines.indexOf(d)) + this.timelines_y_scale.bandwidth() * 0.08)
-                    .text(d => this.tl_name(d))
+                    .text(d => this.timeline_name(d))
                     .style('text-anchor', 'start');
                 return tl_g;
             },
@@ -168,11 +168,52 @@ class ReasonerD3 extends Reasoner {
                 update.select('rect').transition()
                     .attr('width', this.timelines_x_scale(this.horizon) + 20);
                 update.select('text')
-                    .text(d => this.tl_name(d));
+                    .text(d => this.timeline_name(d));
                 return update;
             });
 
-        for (const tl of timelines) {
+        for (const [i, tl] of timelines.entries())
+            this.update_timeline(i, tl);
+    }
+
+    update_timeline(i, tl) {
+        switch (tl.type) {
+            case 'StateVariable':
+                d3.select('#tl-' + i).selectAll('g').data(tl.values, d => d.id).join(
+                    enter => {
+                        const tl_val_g = enter.append('g');
+                        tl_val_g.append('rect')
+                            .attr('x', d => this.timelines_x_scale(d.from))
+                            .attr('y', d => this.timelines_y_scale(i) + this.timelines_y_scale.bandwidth() * 0.1)
+                            .attr('width', d => this.timelines_x_scale(d.to) - this.timelines_x_scale(d.from))
+                            .attr('height', this.timelines_y_scale.bandwidth() * 0.9)
+                            .attr('rx', 5)
+                            .attr('ry', 5)
+                            .style('fill', d => sv_value_fill(d))
+                            .style('stroke', 'lightgray');
+                        tl_val_g.append('text')
+                            .attr('x', d => this.timelines_x_scale(d.from) + (this.timelines_x_scale(d.to) - this.timelines_x_scale(d.from)) / 2)
+                            .attr('y', d => this.timelines_y_scale(i) + this.timelines_y_scale.bandwidth() * 0.5)
+                            .text(d => this.sv_value_name(d))
+                            .style('text-anchor', 'middle');
+                        tl_val_g.on('mouseover', (event, d) => this.tooltip.html(this.sv_val_tooltip(d)).transition().duration(200).style('opacity', .9))
+                            .on('mousemove', event => this.tooltip.style('left', (event.pageX) + 'px').style('top', (event.pageY - 28) + 'px'))
+                            .on('mouseout', event => this.tooltip.transition().duration(500).style('opacity', 0));
+                        return tl_val_g;
+                    },
+                    update => {
+                        update.select('rect').transition().duration(200)
+                            .attr('x', d => this.timelines_x_scale(d.from))
+                            .attr('y', d => this.timelines_y_scale(i) + this.timelines_y_scale.bandwidth() * 0.1).attr('width', d => this.timelines_x_scale(d.to) - this.timelines_x_scale(d.from)).attr('height', this.timelines_y_scale.bandwidth() * 0.9).style('fill', d => sv_value_fill(d));
+                        update.select('text')
+                            .text(d => this.sv_value_name(d))
+                            .transition().duration(200)
+                            .attr('x', d => this.timelines_x_scale(d.from) + (this.timelines_x_scale(d.to) - this.timelines_x_scale(d.from)) / 2)
+                            .attr('y', d => this.timelines_y_scale(i) + this.timelines_y_scale.bandwidth() * 0.5);
+                        return update;
+                    }
+                );
+                break;
         }
     }
 

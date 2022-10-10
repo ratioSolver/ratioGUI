@@ -29,12 +29,14 @@ class Reasoner {
             if (atm.exprs)
                 atm.exprs = this.exprs_to_map(atm.exprs);
 
-        this.timelines.clear();
-
         const origin_var = this.exprs.get('origin');
         const horizon_var = this.exprs.get('horizon');
         this.origin = origin_var.value.num / origin_var.value.den;
         this.horizon = horizon_var.value.num / horizon_var.value.den;
+
+        this.timelines.clear();
+        for (const tl of message.timelines)
+            this.timelines.set(tl.id, tl);
 
         this.executing_tasks.clear();
     }
@@ -97,6 +99,7 @@ class Reasoner {
             resolver.edges.push(eff_edge);
             for (const f of resolver.preconditions) {
                 const prec_edge = { from: f, to: resolver.id, state: resolver.state };
+                this.edges.add(prec_edge);
                 resolver.edges.push(prec_edge);
             }
         }
@@ -243,6 +246,16 @@ class Reasoner {
         this.executing_tasks.clear();
         for (const t of message.executing)
             this.executing_tasks.add(t);
+    }
+
+    timeline_name(tl) { return tl.name; }
+
+    sv_value_title(sv_val) {
+        switch (sv_val.atoms.length) {
+            case 0: return '';
+            case 1: return this.atom_title(sv_val.atoms[0]);
+            default: return Array.from(sv_val.atoms, atm => this.atom_title(atm)).join(', ');
+        }
     }
 
     item_title(itm) { return itm.type + '(' + Array.from(itm.exprs.keys()).join(', ') + ')'; }
