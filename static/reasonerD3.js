@@ -51,9 +51,10 @@ class ReasonerD3 extends Reasoner {
             .attr('fill', 'dimgray');
 
         this.simulation = d3.forceSimulation()
-            .force('link', d3.forceLink().id(d => d.id).distance(70))
-            .force('charge', d3.forceManyBody().strength(-70))
-            .force('center', d3.forceCenter(width / 2, height / 2));
+            .force('link', d3.forceLink().distance(70))
+            .force('charge', d3.forceManyBody().strength(-100))
+            .force('center', d3.forceCenter(width / 2, height / 2))
+            .force('pos', d3.forceX().x(d => (d.phi ? d.pos.lb : this.nodes.get(d.effect).pos.lb - 0.5) * 200).strength(0.5));
 
         this.tooltip = d3.select('body').append('div') // the tooltip always 'exists' as its own html div, even when not visible
             .style('position', 'absolute') // the absolute position is necessary so that we can manually define its position later
@@ -225,6 +226,16 @@ class ReasonerD3 extends Reasoner {
             link.target = this.nodes.get(link.to);
         }
 
+        const l_group = this.graph_g.selectAll('line').data(links).join(
+            enter => {
+                return enter.append('line').attr('stroke', 'dimgray').style('stroke-dasharray', d => stroke_dasharray(d));
+            },
+            update => {
+                update.style('stroke-dasharray', d => stroke_dasharray(d));
+                return update;
+            }
+        );
+
         const n_group = this.graph_g.selectAll('g').data(nodes).join(
             enter => {
                 const g = enter.append('g').attr('cursor', 'grab');
@@ -269,16 +280,6 @@ class ReasonerD3 extends Reasoner {
                     .style('stroke-width', d => stroke_width(d));
                 update.select('text')
                     .style('opacity', d => node_opacity(d));
-                return update;
-            }
-        );
-
-        const l_group = this.graph_g.selectAll('line').data(links).join(
-            enter => {
-                return enter.append('line').attr('stroke', 'dimgray').style('stroke-dasharray', d => stroke_dasharray(d));
-            },
-            update => {
-                update.style('stroke-dasharray', d => stroke_dasharray(d));
                 return update;
             }
         );
