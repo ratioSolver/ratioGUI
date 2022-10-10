@@ -258,12 +258,24 @@ class Reasoner {
         }
     }
 
+    sv_value_content(sv_val) {
+        switch (sv_val.atoms.length) {
+            case 0: return '';
+            case 1: return this.atom_content(sv_val.atoms[0]);
+            default: return Array.from(sv_val.atoms, atm => '<br>' + this.atom_content(atm)).join(', ');
+        }
+    }
+
+    ag_value_title(ag_val) { return this.atom_title(ag_val); }
+
+    ag_value_content(ag_val) { return this.atom_content(ag_val); }
+
     item_title(itm) { return itm.type + '(' + Array.from(itm.exprs.keys()).join(', ') + ')'; }
 
     item_content(itm) {
         const pars = [];
         for (const [name, val] of itm.exprs)
-            pars.push('<br>' + name + ': ' + this.val_to_string(name, val));
+            pars.push('<br>' + name + ': ' + this.val_to_string(val));
         return itm.type + '(' + pars.join(',') + '<br>)';
     }
 
@@ -273,7 +285,7 @@ class Reasoner {
         const pars = [];
         for (const [name, val] of atm.exprs)
             if (name != 'tau')
-                pars.push('<br>' + name + ': ' + this.val_to_string(name, val));
+                pars.push('<br>' + name + ': ' + this.val_to_string(val));
         return '\u03C3' + atm.sigma + ' ' + atm.type + '(' + pars.join(',') + '<br>)';
     }
 
@@ -289,7 +301,7 @@ class Reasoner {
                     return val.value.num / val.value.den + ' [' + lb + ', ' + ub + ']';
             case 'string': return val.value;
             default:
-                return Array.isArray(val.value) ? '[' + val.value.map(itm => itm.name).sort().join(',') + ']' : val.value.name;
+                return Array.isArray(val.value) ? '[' + val.value.map(itm => itm.name).sort().join(',') + ']' : val.name;
         }
     }
 

@@ -179,8 +179,59 @@ class ReasonerD3 extends Reasoner {
 
     update_timeline(i, tl) {
         switch (tl.type) {
+            case 'Agent':
+                tl.values = tl.values.map(atm_id => this.atoms.get(atm_id));
+                const ends = [0];
+                for (const val of tl.values) {
+                    if (val.exprs.has('at')) {
+                        val.from = val.exprs.get('at').value.num / val.exprs.get('at').value.den;
+                        val.to = val.from + 1;
+                    } else {
+                        val.from = val.exprs.get('start').value.num / val.exprs.get('start').value.den;
+                        val.to = val.exprs.get('end').value.num / val.exprs.get('end').value.den;
+                    }
+                    val.y = values_y(val.from, val.from === val.to ? val.from + 0.1 : val.to, ends);
+                }
+                const max_overlap = d3.max(tl.values, d => d.y) + 1;
+                const agent_y_scale = d3.scaleBand().domain(d3.range(max_overlap)).rangeRound([0, this.timelines_y_scale.bandwidth() * 0.9]).padding(0.1);
+                d3.select('#tl-' + tl.id).selectAll('g').data(tl.values).join(
+                    enter => {
+                        const tl_val_g = enter.append('g');
+                        tl_val_g.append('rect')
+                            .attr('x', d => this.timelines_x_scale(d.from))
+                            .attr('y', d => this.timelines_y_scale(i) + this.timelines_y_scale.bandwidth() * 0.1 + agent_y_scale(max_overlap - 1 - d.y))
+                            .attr('width', d => d.from === d.to ? 1 : this.timelines_x_scale(d.to) - this.timelines_x_scale(d.from))
+                            .attr('height', agent_y_scale.bandwidth())
+                            .attr('rx', 5)
+                            .attr('ry', 5)
+                            .style('fill', 'url(#ag-lg)')
+                            .style('stroke', 'lightgray');
+                        tl_val_g.append('text')
+                            .attr('x', d => this.timelines_x_scale(d.from) + (d.from === d.to ? 1 : this.timelines_x_scale(d.to) - this.timelines_x_scale(d.from)) / 2)
+                            .attr('y', d => this.timelines_y_scale(i) + this.timelines_y_scale.bandwidth() * 0.1 + agent_y_scale(max_overlap - 1 - d.y) + agent_y_scale.bandwidth() / 2)
+                            .text(d => this.ag_value_title(d))
+                            .style('text-anchor', 'middle');
+                        tl_val_g.on('mouseover', (event, d) => this.tooltip.html(this.ag_value_content(d)).transition().duration(200).style('opacity', .9))
+                            .on('mousemove', event => this.tooltip.style('left', (event.pageX) + 'px').style('top', (event.pageY - 28) + 'px'))
+                            .on('mouseout', event => this.tooltip.transition().duration(500).style('opacity', 0));
+                        return tl_val_g;
+                    },
+                    update => {
+                        update.select('rect').transition().duration(200)
+                            .attr('x', d => this.timelines_x_scale(d.from))
+                            .attr('y', d => this.timelines_y_scale(i) + this.timelines_y_scale.bandwidth() * 0.1 + agent_y_scale(max_overlap - 1 - d.y))
+                            .attr('width', d => d.from === d.to ? 1 : this.timelines_x_scale(d.to) - this.timelines_x_scale(d.from))
+                            .attr('height', agent_y_scale.bandwidth() * 0.9);
+                        update.select('text')
+                            .text(d => this.ag_value_title(d))
+                            .attr('x', d => this.timelines_x_scale(d.from) + (d.from === d.to ? 1 : this.timelines_x_scale(d.to) - this.timelines_x_scale(d.from)) / 2)
+                            .attr('y', d => this.timelines_y_scale(i) + this.timelines_y_scale.bandwidth() * 0.1 + agent_y_scale(max_overlap - 1 - d.y) + agent_y_scale.bandwidth() / 2);
+                        return update;
+                    }
+                );
+                break;
             case 'StateVariable':
-                d3.select('#tl-' + i).selectAll('g').data(tl.values, d => d.id).join(
+                d3.select('#tl-' + i).selectAll('g').data(tl.values).join(
                     enter => {
                         const tl_val_g = enter.append('g');
                         tl_val_g.append('rect')
@@ -197,7 +248,7 @@ class ReasonerD3 extends Reasoner {
                             .attr('y', d => this.timelines_y_scale(i) + this.timelines_y_scale.bandwidth() * 0.5)
                             .text(d => this.sv_value_name(d))
                             .style('text-anchor', 'middle');
-                        tl_val_g.on('mouseover', (event, d) => this.tooltip.html(this.sv_val_tooltip(d)).transition().duration(200).style('opacity', .9))
+                        tl_val_g.on('mouseover', (event, d) => this.tooltip.html(this.sv_value_content(d)).transition().duration(200).style('opacity', .9))
                             .on('mousemove', event => this.tooltip.style('left', (event.pageX) + 'px').style('top', (event.pageY - 28) + 'px'))
                             .on('mouseout', event => this.tooltip.transition().duration(500).style('opacity', 0));
                         return tl_val_g;
@@ -319,6 +370,16 @@ class ReasonerD3 extends Reasoner {
         this.simulation.restart();
         this.simulation.alpha(0.3);
     }
+}
+
+function values_y(start, end, ends) {
+    for (let i = 0; i < ends.length; i++)
+        if (ends[i] <= start) {
+            ends[i] = end;
+            return i;
+        }
+    ends.push(end);
+    return ends.length - 1;
 }
 
 function stroke(n) {
