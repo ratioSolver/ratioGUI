@@ -2,19 +2,42 @@ const color_interpolator = d3.scaleSequential(d3.interpolateRdYlGn).domain([15, 
 
 class ReasonerD3 extends Reasoner {
 
-    constructor(graph_id = 'graph', width = window.innerWidth, height = window.innerHeight - 56) {
+    constructor(timelines_id = 'timelines', graph_id = 'graph', width = window.innerWidth, height = window.innerHeight - 56) {
         super();
-        const svg = d3.select('#' + graph_id).append('svg')
+        const timelines_svg = d3.select('#' + timelines_id).append('svg')
             .attr('width', '100%')
             .attr('height', '100%')
             .attr('viewBox', '0 0 ' + width + ' ' + height);
 
-        this.graph_g = svg.append('g');
+        this.timelines_g = timelines_svg.append('g');
+
+        this.timelines_height = height;
+
+        this.timelines_x_scale = d3.scaleLinear().range([0, width]);
+        this.timelines_y_scale = d3.scaleBand().rangeRound([0, this.timelines_height]).padding(0.1);
+
+        this.timelines_axis_g = timelines_svg.append('g');
+        this.timelines_x_axis = d3.axisBottom(this.timelines_x_scale);
+        this.timelines_axis_g.call(this.timelines_x_axis);
+
+        this.timelines_zoom = d3.zoom().on('zoom', event => {
+            this.timelines_axis_g.call(this.timelines_x_axis.scale(event.transform.rescaleX(this.timelines_x_scale)));
+            this.timelines_g.attr('transform', event.transform);
+        });
+
+        timelines_svg.call(this.timelines_zoom);
+
+        const graph_svg = d3.select('#' + graph_id).append('svg')
+            .attr('width', '100%')
+            .attr('height', '100%')
+            .attr('viewBox', '0 0 ' + width + ' ' + height);
+
+        this.graph_g = graph_svg.append('g');
 
         this.graph_zoom = d3.zoom().on('zoom', event => this.graph_g.attr('transform', event.transform));
-        svg.call(this.graph_zoom);
+        graph_svg.call(this.graph_zoom);
 
-        svg.append('svg:defs').append('svg:marker')
+        graph_svg.append('svg:defs').append('svg:marker')
             .attr('id', 'triangle')
             .attr('viewBox', '0 -5 10 10')
             .attr('refX', 8)
@@ -32,14 +55,15 @@ class ReasonerD3 extends Reasoner {
             .force('charge', d3.forceManyBody().strength(-70))
             .force('center', d3.forceCenter(width / 2, height / 2));
 
-        this.tooltip = d3.select("body").append("div") // the tooltip always "exists" as its own html div, even when not visible
-            .style("position", "absolute") // the absolute position is necessary so that we can manually define its position later
-            .style("opacity", 0) // hide it from default at the start so it only appears on hover
-            .attr("class", "tooltip")
+        this.tooltip = d3.select('body').append('div') // the tooltip always 'exists' as its own html div, even when not visible
+            .style('position', 'absolute') // the absolute position is necessary so that we can manually define its position later
+            .style('opacity', 0) // hide it from default at the start so it only appears on hover
+            .attr('class', 'tooltip')
     }
 
     state_changed(message) {
         super.state_changed(message);
+        this.update_timelines();
     }
 
     solution_found() {
@@ -116,6 +140,42 @@ class ReasonerD3 extends Reasoner {
         this.update_graph();
     }
 
+    update_timelines() {
+        this.timelines_x_scale.domain([0, this.horizon]);
+        this.timelines_axis_g.call(this.timelines_x_axis);
+        this.timelines_y_scale.domain(d3.range(this.timelines.size));
+
+        const timelines = Array.from(this.timelines.values());
+        this.timelines_g.selectAll('g.timeline').data(timelines, d => d.id).join(
+            enter => {
+                const tl_g = enter.append('g')
+                    .attr('class', 'timeline')
+                    .attr('id', d => 'tl-' + d.id);
+                tl_g.append('rect')
+                    .attr('x', -10)
+                    .attr('y', d => this.timelines_y_scale(timelines.indexOf(d)))
+                    .attr('width', this.timelines_x_scale(this.horizon) + 20)
+                    .attr('height', this.timelines_y_scale.bandwidth())
+                    .style('fill', 'floralwhite');
+                tl_g.append('text')
+                    .attr('x', 0)
+                    .attr('y', d => this.timelines_y_scale(timelines.indexOf(d)) + this.timelines_y_scale.bandwidth() * 0.08)
+                    .text(d => this.tl_name(d))
+                    .style('text-anchor', 'start');
+                return tl_g;
+            },
+            update => {
+                update.select('rect').transition()
+                    .attr('width', this.timelines_x_scale(this.horizon) + 20);
+                update.select('text')
+                    .text(d => this.tl_name(d));
+                return update;
+            });
+
+        for (const tl of timelines) {
+        }
+    }
+
     update_graph() {
         const nodes = Array.from(this.nodes.values());
         const links = Array.from(this.edges);
@@ -143,10 +203,10 @@ class ReasonerD3 extends Reasoner {
 
                 g.append('text')
                     .attr('y', -8)
-                    .text(d => d.phi ? flaw_label(d) : resolver_label(d))
+                    .text(d => d.label)
                     .style('text-anchor', 'middle').style('opacity', d => node_opacity(d));
 
-                g.on('mouseover', (event, d) => this.tooltip.html(d.phi ? flaw_tooltip(d) : resolver_tooltip(d)).transition().duration(200).style('opacity', 0.9))
+                g.on('mouseover', (event, d) => this.tooltip.html(d.title).transition().duration(200).style('opacity', 0.9))
                     .on('mousemove', event => this.tooltip.style('left', (event.pageX) + 'px').style('top', (event.pageY - 28) + 'px'))
                     .on('mouseout', event => this.tooltip.transition().duration(500).style('opacity', 0))
                     .on('click', (event, d) => { d.fx = null; d.fy = null; });

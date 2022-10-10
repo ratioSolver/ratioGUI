@@ -4,6 +4,10 @@ class Reasoner {
         this.items = new Map();
         this.atoms = new Map();
 
+        this.timelines = new Map();
+        this.origin = 0;
+        this.horizon = 1;
+
         this.nodes = new Map();
         this.edges = new Set();
         this.current_flaw;
@@ -24,6 +28,13 @@ class Reasoner {
         for (const atm of this.atoms.values())
             if (atm.exprs)
                 atm.exprs = this.exprs_to_map(atm.exprs);
+
+        this.timelines.clear();
+
+        const origin_var = this.exprs.get('origin');
+        const horizon_var = this.exprs.get('horizon');
+        this.origin = origin_var.value.num / origin_var.value.den;
+        this.horizon = horizon_var.value.num / horizon_var.value.den;
 
         this.executing_tasks.clear();
     }
