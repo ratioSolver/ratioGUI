@@ -25,8 +25,10 @@ class ReasonerD3 extends Reasoner {
         this.timelines_zoom = d3.zoom().on('zoom', event => {
             this.timelines_axis_g.call(this.timelines_x_axis.scale(event.transform.rescaleX(this.timelines_x_scale)));
             this.timelines_g.attr('transform', event.transform);
-            this.scale = event.transform.k;
-            wrap_text(this.scale);
+            if (this.scale != event.transform.k) {
+                this.scale = event.transform.k;
+                wrap_text(this.scale);
+            }
         });
 
         timelines_svg.call(this.timelines_zoom);
@@ -501,8 +503,8 @@ function wrap_text(scale) {
         if (scale > 1)
             d.lastChild.style.fontSize = font_size / scale;
         const width = d.firstChild.width.baseVal.value;
-        d.lastChild.textContent = d.__data__.text;
-        while (d.lastChild.getComputedTextLength() >= width)
+        d.lastChild.textContent = d3.select(d).datum().text;
+        while (d.lastChild.getComputedTextLength() >= width - 5)
             d.lastChild.textContent = d.lastChild.textContent.slice(0, -1);
     }
 }

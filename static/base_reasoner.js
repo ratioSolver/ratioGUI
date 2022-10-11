@@ -222,24 +222,24 @@ class Reasoner {
 
     starting(message) {
         console.log('starting');
-        for (const t of message.starting)
-            console.log(this.atom_content(this.atoms.get(t)));
+        for (const atm of message.starting)
+            console.log(this.atom_content(this.atoms.get(atm)));
     }
 
     start(message) {
-        for (const t of message.start)
-            this.executing_tasks.add(t);
+        for (const atm of message.start)
+            this.executing_tasks.add(this.atoms.get(atm));
     }
 
     ending(message) {
         console.log('ending');
-        for (const t of message.ending)
-            console.log(this.atom_content(this.atoms.get(t)));
+        for (const atm of message.ending)
+            console.log(this.atom_content(this.atoms.get(atm)));
     }
 
     end(message) {
-        for (const t of message.end)
-            this.executing_tasks.delete(t);
+        for (const atm of message.end)
+            this.executing_tasks.delete(this.atoms.get(atm));
     }
 
     executing_changed(message) {
