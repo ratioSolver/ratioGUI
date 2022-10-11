@@ -244,8 +244,8 @@ class Reasoner {
 
     executing_changed(message) {
         this.executing_tasks.clear();
-        for (const t of message.executing)
-            this.executing_tasks.add(t);
+        for (const atm of message.executing)
+            this.executing_tasks.add(this.atoms.get(atm));
     }
 
     timeline_name(tl) { return tl.name; }

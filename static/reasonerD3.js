@@ -75,6 +75,36 @@ class ReasonerD3 extends Reasoner {
 
     state_changed(message) {
         super.state_changed(message);
+        for (const tl of this.timelines.values())
+            switch (tl.type) {
+                case 'Agent':
+                    tl.values = tl.values.map(atm_id => this.atoms.get(atm_id));
+                    const ends = [0];
+                    for (const val of tl.values) {
+                        if (val.exprs.has('at')) {
+                            val.from = val.exprs.get('at').value.num / val.exprs.get('at').value.den;
+                            val.to = val.from + 1;
+                        } else {
+                            val.from = val.exprs.get('start').value.num / val.exprs.get('start').value.den;
+                            val.to = val.exprs.get('end').value.num / val.exprs.get('end').value.den;
+                        }
+                        val.y = values_y(val.from, val.from === val.to ? val.from + 0.1 : val.to, ends);
+                        val.text = this.ag_value_title(val);
+                    }
+                    break;
+                case 'StateVariable':
+                    for (const val of tl.values) {
+                        if (val.exprs.has('at')) {
+                            val.from = val.exprs.get('at').value.num / val.exprs.get('at').value.den;
+                            val.to = val.from + 1;
+                        } else {
+                            val.from = val.exprs.get('start').value.num / val.exprs.get('start').value.den;
+                            val.to = val.exprs.get('end').value.num / val.exprs.get('end').value.den;
+                        }
+                        val.text = this.sv_value_name(val);
+                    }
+                    break;
+            }
         this.update_timelines();
     }
 
@@ -152,6 +182,29 @@ class ReasonerD3 extends Reasoner {
         this.update_graph();
     }
 
+    start(message) {
+        super.start(message);
+        for (const atm of message.start)
+            this.atoms.get(atm).current = true;
+        this.update_timelines();
+    }
+
+    end(message) {
+        for (const atm of message.end)
+            this.atoms.get(atm).current = false;
+        super.end(message);
+        this.update_timelines();
+    }
+
+    executing_changed(message) {
+        for (const atm of this.executing_tasks)
+            atm.current = false;
+        super.executing_changed(message);
+        for (const atm of this.executing_tasks)
+            atm.current = true;
+        this.update_timelines();
+    }
+
     update_timelines() {
         this.timelines_x_scale.domain([0, this.horizon]);
         this.timelines_axis_g.call(this.timelines_x_axis);
@@ -196,19 +249,6 @@ class ReasonerD3 extends Reasoner {
     update_timeline(i, tl) {
         switch (tl.type) {
             case 'Agent':
-                tl.values = tl.values.map(atm_id => this.atoms.get(atm_id));
-                const ends = [0];
-                for (const val of tl.values) {
-                    if (val.exprs.has('at')) {
-                        val.from = val.exprs.get('at').value.num / val.exprs.get('at').value.den;
-                        val.to = val.from + 1;
-                    } else {
-                        val.from = val.exprs.get('start').value.num / val.exprs.get('start').value.den;
-                        val.to = val.exprs.get('end').value.num / val.exprs.get('end').value.den;
-                    }
-                    val.y = values_y(val.from, val.from === val.to ? val.from + 0.1 : val.to, ends);
-                    val.text = this.ag_value_title(val);
-                }
                 const max_overlap = d3.max(tl.values, d => d.y) + 1;
                 const agent_y_scale = d3.scaleBand().domain(d3.range(max_overlap)).rangeRound([0, this.timelines_y_scale.bandwidth() * 0.9]).padding(0.1);
                 d3.select('#tl-' + tl.id).selectAll('g').data(tl.values).join(
@@ -224,7 +264,7 @@ class ReasonerD3 extends Reasoner {
                             .attr('rx', 5)
                             .attr('ry', 5)
                             .style('fill', 'url(#ag-lg)')
-                            .style('stroke', 'lightgray');
+                            .style('stroke', d => value_stroke(d));
 
                         tl_val_g.append('text')
                             .attr('x', d => this.timelines_x_scale(d.from) + (d.from === d.to ? 1 : this.timelines_x_scale(d.to) - this.timelines_x_scale(d.from)) / 2)
@@ -243,10 +283,11 @@ class ReasonerD3 extends Reasoner {
                             .attr('x', d => this.timelines_x_scale(d.from))
                             .attr('y', d => this.timelines_y_scale(i) + this.timelines_y_scale.bandwidth() * 0.1 + agent_y_scale(max_overlap - 1 - d.y))
                             .attr('width', d => d.from === d.to ? 1 : this.timelines_x_scale(d.to) - this.timelines_x_scale(d.from))
-                            .attr('height', agent_y_scale.bandwidth() * 0.9);
+                            .attr('height', agent_y_scale.bandwidth() * 0.9)
+                            .style('stroke', d => value_stroke(d));
 
                         update.select('text')
-                            .text(d => this.ag_value_title(d))
+                            .text(d => d.text)
                             .attr('x', d => this.timelines_x_scale(d.from) + (d.from === d.to ? 1 : this.timelines_x_scale(d.to) - this.timelines_x_scale(d.from)) / 2)
                             .attr('y', d => this.timelines_y_scale(i) + this.timelines_y_scale.bandwidth() * 0.1 + agent_y_scale(max_overlap - 1 - d.y) + agent_y_scale.bandwidth() / 2);
 
@@ -255,16 +296,6 @@ class ReasonerD3 extends Reasoner {
                 );
                 break;
             case 'StateVariable':
-                for (const val of tl.values) {
-                    if (val.exprs.has('at')) {
-                        val.from = val.exprs.get('at').value.num / val.exprs.get('at').value.den;
-                        val.to = val.from + 1;
-                    } else {
-                        val.from = val.exprs.get('start').value.num / val.exprs.get('start').value.den;
-                        val.to = val.exprs.get('end').value.num / val.exprs.get('end').value.den;
-                    }
-                    val.text = this.sv_value_name(val);
-                }
                 d3.select('#tl-' + i).selectAll('g').data(tl.values).join(
                     enter => {
                         const tl_val_g = enter.append('g')
@@ -278,7 +309,7 @@ class ReasonerD3 extends Reasoner {
                             .attr('rx', 5)
                             .attr('ry', 5)
                             .style('fill', d => sv_value_fill(d))
-                            .style('stroke', 'lightgray');
+                            .style('stroke', d => value_stroke(d));
 
                         tl_val_g.append('text')
                             .attr('x', d => this.timelines_x_scale(d.from) + (this.timelines_x_scale(d.to) - this.timelines_x_scale(d.from)) / 2)
@@ -297,10 +328,11 @@ class ReasonerD3 extends Reasoner {
                             .attr('x', d => this.timelines_x_scale(d.from))
                             .attr('y', d => this.timelines_y_scale(i) + this.timelines_y_scale.bandwidth() * 0.1).attr('width', d => this.timelines_x_scale(d.to) - this.timelines_x_scale(d.from))
                             .attr('height', this.timelines_y_scale.bandwidth() * 0.9)
-                            .style('fill', d => sv_value_fill(d));
+                            .style('fill', d => sv_value_fill(d))
+                            .style('stroke', d => value_stroke(d));
 
                         update.select('text')
-                            .text(d => this.sv_value_name(d))
+                            .text(d => d.text)
                             .transition().duration(200)
                             .attr('x', d => this.timelines_x_scale(d.from) + (this.timelines_x_scale(d.to) - this.timelines_x_scale(d.from)) / 2)
                             .attr('y', d => this.timelines_y_scale(i) + this.timelines_y_scale.bandwidth() * 0.5);
@@ -345,7 +377,7 @@ class ReasonerD3 extends Reasoner {
                     .style('fill-opacity', d => node_opacity(d))
                     .style('stroke-dasharray', d => stroke_dasharray(d))
                     .style('opacity', d => node_opacity(d))
-                    .transition().duration(500).style('stroke', d => stroke(d))
+                    .transition().duration(500).style('stroke', d => node_stroke(d))
                     .style('stroke-width', d => stroke_width(d));
 
                 g.append('text')
@@ -371,7 +403,7 @@ class ReasonerD3 extends Reasoner {
                     .style('fill-opacity', d => node_opacity(d))
                     .style('stroke-dasharray', d => stroke_dasharray(d))
                     .style('opacity', d => node_opacity(d)).transition().duration(500)
-                    .style('stroke', d => stroke(d))
+                    .style('stroke', d => node_stroke(d))
                     .style('stroke-width', d => stroke_width(d));
 
                 update.select('text')
@@ -428,7 +460,11 @@ function values_y(start, end, ends) {
     return ends.length - 1;
 }
 
-function stroke(n) {
+function value_stroke(n) {
+    return n.current ? 'dimgray' : 'lightgray';
+}
+
+function node_stroke(n) {
     return n.current ? '#ff00ff' : '#262626';
 }
 
