@@ -437,8 +437,6 @@ function stroke_width(n) {
 }
 
 function stroke_dasharray(n) {
-    if (!n)
-        console.log('here..');
     switch (n.state) {
         case 0: // False
             return '1';
