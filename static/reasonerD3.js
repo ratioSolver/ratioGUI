@@ -264,7 +264,8 @@ class ReasonerD3 extends Reasoner {
                             .attr('rx', 5)
                             .attr('ry', 5)
                             .style('fill', 'url(#ag-lg)')
-                            .style('stroke', d => value_stroke(d));
+                            .style('stroke', d => value_stroke(d))
+                            .style('stroke-width', d => stroke_width(d));
 
                         tl_val_g.append('text')
                             .attr('x', d => this.timelines_x_scale(d.from) + (d.from === d.to ? 1 : this.timelines_x_scale(d.to) - this.timelines_x_scale(d.from)) / 2)
@@ -284,7 +285,8 @@ class ReasonerD3 extends Reasoner {
                             .attr('y', d => this.timelines_y_scale(i) + this.timelines_y_scale.bandwidth() * 0.1 + agent_y_scale(max_overlap - 1 - d.y))
                             .attr('width', d => d.from === d.to ? 1 : this.timelines_x_scale(d.to) - this.timelines_x_scale(d.from))
                             .attr('height', agent_y_scale.bandwidth() * 0.9)
-                            .style('stroke', d => value_stroke(d));
+                            .style('stroke', d => value_stroke(d))
+                            .style('stroke-width', d => stroke_width(d));
 
                         update.select('text')
                             .text(d => d.text)
@@ -309,7 +311,8 @@ class ReasonerD3 extends Reasoner {
                             .attr('rx', 5)
                             .attr('ry', 5)
                             .style('fill', d => sv_value_fill(d))
-                            .style('stroke', d => value_stroke(d));
+                            .style('stroke', d => value_stroke(d))
+                            .style('stroke-width', d => stroke_width(d));
 
                         tl_val_g.append('text')
                             .attr('x', d => this.timelines_x_scale(d.from) + (this.timelines_x_scale(d.to) - this.timelines_x_scale(d.from)) / 2)
@@ -329,7 +332,8 @@ class ReasonerD3 extends Reasoner {
                             .attr('y', d => this.timelines_y_scale(i) + this.timelines_y_scale.bandwidth() * 0.1).attr('width', d => this.timelines_x_scale(d.to) - this.timelines_x_scale(d.from))
                             .attr('height', this.timelines_y_scale.bandwidth() * 0.9)
                             .style('fill', d => sv_value_fill(d))
-                            .style('stroke', d => value_stroke(d));
+                            .style('stroke', d => value_stroke(d))
+                            .style('stroke-width', d => stroke_width(d));
 
                         update.select('text')
                             .text(d => d.text)
