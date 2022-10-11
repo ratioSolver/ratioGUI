@@ -10,6 +10,11 @@ class ReasonerD3 extends Reasoner {
             .attr('height', '100%')
             .attr('viewBox', '0 0 ' + width + ' ' + height);
 
+        this.ag_lg = timelines_svg.append('defs').append('linearGradient').attr('id', 'ag-lg').attr('x1', '0%').attr('x2', '0%').attr('y1', '0%').attr('y2', '100%');
+        this.ag_lg.append('stop').attr('offset', '0%').style('stop-color', 'navajowhite').style('stop-opacity', 1);
+        this.ag_lg.append('stop').attr('offset', '20%').style('stop-color', 'ivory').style('stop-opacity', 1);
+        this.ag_lg.append('stop').attr('offset', '100%').style('stop-color', 'navajowhite').style('stop-opacity', 1);
+
         this.timelines_g = timelines_svg.append('g');
 
         this.timelines_height = height;
@@ -65,7 +70,7 @@ class ReasonerD3 extends Reasoner {
         this.tooltip = d3.select('body').append('div') // the tooltip always 'exists' as its own html div, even when not visible
             .style('position', 'absolute') // the absolute position is necessary so that we can manually define its position later
             .style('opacity', 0) // hide it from default at the start so it only appears on hover
-            .attr('class', 'tooltip')
+            .attr('class', 'tooltip');
     }
 
     state_changed(message) {
