@@ -247,6 +247,10 @@ class Reasoner {
 
     timeline_name(tl) { return tl.name; }
 
+    ag_value_title(ag_val) { return this.atom_title(ag_val); }
+
+    ag_value_content(ag_val) { return this.atom_content(ag_val); }
+
     sv_value_title(sv_val) {
         switch (sv_val.atoms.length) {
             case 0: return '';
@@ -263,9 +267,13 @@ class Reasoner {
         }
     }
 
-    ag_value_title(ag_val) { return this.atom_title(ag_val); }
-
-    ag_value_content(ag_val) { return this.atom_content(ag_val); }
+    rr_value_content(rr_val) {
+        switch (rr_val.atoms.length) {
+            case 0: return '0';
+            case 1: return rr_val.usage + ': ' + this.atom_content(rr_val.atoms[0]);
+            default: return rr_val.usage + ': [' + Array.from(rr_val.atoms, atm => '<br>' + this.atom_content(atm)).join(', ') + ']';
+        }
+    }
 
     item_title(itm) { return itm.type + '(' + Array.from(itm.exprs.keys()).join(', ') + ')'; }
 

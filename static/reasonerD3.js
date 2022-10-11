@@ -97,15 +97,32 @@ class ReasonerD3 extends Reasoner {
                     break;
                 case 'StateVariable':
                     for (const val of tl.values) {
-                        if (val.exprs.has('at')) {
-                            val.from = val.exprs.get('at').value.num / val.exprs.get('at').value.den;
-                            val.to = val.from + 1;
-                        } else {
-                            val.from = val.exprs.get('start').value.num / val.exprs.get('start').value.den;
-                            val.to = val.exprs.get('end').value.num / val.exprs.get('end').value.den;
-                        }
+                        val.from = val.from.num / val.from.den;
+                        val.to = val.to.num / val.to.den;
                         val.text = this.sv_value_name(val);
                     }
+                    break;
+                case 'ReusableResource':
+                    tl.capacity = tl.capacity.num / tl.capacity.den;
+                    for (const val of tl.values) {
+                        val.from = val.from.num / val.from.den;
+                        val.to = val.to.num / val.to.den;
+                        val.usage = val.usage.num / val.usage.den;
+                    }
+                    if (tl.values.length)
+                        tl.values.push({
+                            atoms: [],
+                            from: tl.values[tl.values.length - 1].to,
+                            to: this.horizon,
+                            usage: 0
+                        });
+                    else
+                        tl.values.push({
+                            atoms: [],
+                            from: this.origin,
+                            to: this.horizon,
+                            usage: 0
+                        });
                     break;
             }
         for (const atm of this.executing_tasks)
@@ -298,7 +315,7 @@ class ReasonerD3 extends Reasoner {
                 );
                 break;
             case 'StateVariable':
-                d3.select('#tl-' + i).selectAll('g').data(tl.values).join(
+                d3.select('#tl-' + tl.id).selectAll('g').data(tl.values).join(
                     enter => {
                         const tl_val_g = enter.append('g')
                             .attr('class', 'wrappable');
@@ -341,6 +358,61 @@ class ReasonerD3 extends Reasoner {
                             .attr('x', d => this.timelines_x_scale(d.from) + (this.timelines_x_scale(d.to) - this.timelines_x_scale(d.from)) / 2)
                             .attr('y', d => this.timelines_y_scale(i) + this.timelines_y_scale.bandwidth() * 0.5);
 
+                        return update;
+                    }
+                );
+                break;
+            case 'ReusableResource':
+                const rr_max_val = (tl.values.length ? Math.max(d3.max(tl.values, d => d.usage), tl.capacity) : tl.capacity);
+                const rr_y_scale = d3.scaleLinear().domain([0, rr_max_val + rr_max_val * 0.1]).range([this.timelines_y_scale(i) + this.timelines_y_scale.bandwidth(), this.timelines_y_scale(i)]);
+                const rr_g = d3.select('#tl-' + tl.id);
+                rr_g.selectAll('path').data([tl.values]).join(
+                    enter => {
+                        const tl_val_g = enter.append('path')
+                            .attr('fill', 'aliceblue')
+                            .attr('stroke', 'lightblue')
+                            .attr('d', d3.area().curve(d3.curveStepAfter)
+                                .x(d => this.timelines_x_scale(d.from))
+                                .y0(this.timelines_y_scale(i) + this.timelines_y_scale.bandwidth())
+                                .y1(d => rr_y_scale(d.usage)));
+
+                        tl_val_g.on('mouseover', (event, d) => this.tooltip.html(this.rr_value_content(d)).transition().duration(200).style('opacity', .9))
+                            .on('mousemove', event => this.tooltip.style('left', (event.pageX) + 'px').style('top', (event.pageY - 28) + 'px'))
+                            .on('mouseout', event => this.tooltip.transition().duration(500).style('opacity', 0));
+
+                        return tl_val_g;
+                    },
+
+                    update => {
+                        update.transition().duration(200)
+                            .attr('d', d3.area().curve(d3.curveStepAfter)
+                                .x(d => this.timelines_x_scale(d.from))
+                                .y0(this.timelines_y_scale(i) + this.timelines_y_scale.bandwidth())
+                                .y1(d => rr_y_scale(d.usage)));
+
+                        return update;
+                    }
+                );
+                rr_g.selectAll('line').data([tl.capacity]).join(
+                    enter => {
+                        const line_g = enter.append('line')
+                            .attr('stroke-width', 2)
+                            .attr('stroke-opacity', 0.8)
+                            .attr('stroke-linecap', 'round')
+                            .attr('stroke', 'darkslategray');
+                        line_g
+                            .attr('x1', this.timelines_x_scale(0))
+                            .attr('y1', d => rr_y_scale(d))
+                            .attr('x2', this.timelines_x_scale(this.horizon))
+                            .attr('y2', d => rr_y_scale(d));
+                        return line_g;
+                    },
+
+                    update => {
+                        update.transition().duration(200)
+                            .attr('y1', d => rr_y_scale(d))
+                            .attr('x2', this.timelines_x_scale(this.horizon))
+                            .attr('y2', d => rr_y_scale(d));
                         return update;
                     }
                 );
