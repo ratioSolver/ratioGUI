@@ -1,4 +1,5 @@
 const color_interpolator = d3.scaleSequential(d3.interpolateRdYlGn).domain([15, 0]);
+const bisect_value = d3.bisector(d => d.to).left;
 const font_size = 14;
 
 class ReasonerD3 extends Reasoner {
@@ -100,6 +101,7 @@ class ReasonerD3 extends Reasoner {
                         val.from = val.from.num / val.from.den;
                         val.to = val.to.num / val.to.den;
                         val.text = this.sv_value_name(val);
+                        val.atoms = val.atoms.map(atm_id => this.atoms.get(atm_id));
                     }
                     break;
                 case 'ReusableResource':
@@ -108,6 +110,7 @@ class ReasonerD3 extends Reasoner {
                         val.from = val.from.num / val.from.den;
                         val.to = val.to.num / val.to.den;
                         val.usage = val.usage.num / val.usage.den;
+                        val.atoms = val.atoms.map(atm_id => this.atoms.get(atm_id));
                     }
                     if (tl.values.length)
                         tl.values.push({
@@ -376,8 +379,16 @@ class ReasonerD3 extends Reasoner {
                                 .y0(this.timelines_y_scale(i) + this.timelines_y_scale.bandwidth())
                                 .y1(d => rr_y_scale(d.usage)));
 
-                        tl_val_g.on('mouseover', (event, d) => this.tooltip.html(this.rr_value_content(d)).transition().duration(200).style('opacity', .9))
-                            .on('mousemove', event => this.tooltip.style('left', (event.pageX) + 'px').style('top', (event.pageY - 28) + 'px'))
+                        tl_val_g
+                            .on('mouseover', (event, d) => {
+                                const i = bisect_value(d, this.timelines_x_scale.invert(d3.pointer(event)[0]), 1);
+                                return this.tooltip.html(this.rr_value_content(d[i])).transition().duration(200).style('opacity', .9);
+                            })
+                            .on('mousemove', (event, d) => {
+                                const i = bisect_value(d, this.timelines_x_scale.invert(d3.pointer(event)[0]), 1);
+                                this.tooltip.html(this.rr_value_content(d[i])).transition().duration(200).style('opacity', .9);
+                                return this.tooltip.style('left', (event.pageX) + 'px').style('top', (event.pageY - 28) + 'px');
+                            })
                             .on('mouseout', event => this.tooltip.transition().duration(500).style('opacity', 0));
 
                         return tl_val_g;

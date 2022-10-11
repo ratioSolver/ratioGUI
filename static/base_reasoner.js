@@ -269,9 +269,9 @@ class Reasoner {
 
     rr_value_content(rr_val) {
         switch (rr_val.atoms.length) {
-            case 0: return '0';
-            case 1: return rr_val.usage + ': ' + this.atom_content(rr_val.atoms[0]);
-            default: return rr_val.usage + ': [' + Array.from(rr_val.atoms, atm => '<br>' + this.atom_content(atm)).join(', ') + ']';
+            case 0: return '0: [' + rr_val.from + ', ' + rr_val.to + ']';
+            case 1: return rr_val.usage + ': [' + rr_val.from + ', ' + rr_val.to + ']<br>' + this.atom_content(rr_val.atoms[0]);
+            default: return rr_val.usage + ': [' + rr_val.from + ', ' + rr_val.to + ']' + Array.from(rr_val.atoms, atm => '<br>' + this.atom_content(atm)).join(', ');
         }
     }
 
