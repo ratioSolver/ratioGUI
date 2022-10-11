@@ -74,6 +74,9 @@ class ReasonerD3 extends Reasoner {
     }
 
     state_changed(message) {
+        if (message.executing)
+            for (const atm of this.executing_tasks)
+                atm.current = false;
         super.state_changed(message);
         for (const tl of this.timelines.values())
             switch (tl.type) {
@@ -105,13 +108,18 @@ class ReasonerD3 extends Reasoner {
                     }
                     break;
             }
+        for (const atm of this.executing_tasks)
+            atm.current = true;
         this.update_timelines();
+        if (message.time)
+            this.update_time();
     }
 
     solution_found() {
         if (this.current_flaw) this.current_flaw.current = false;
         if (this.current_resolver) this.current_resolver.current = false;
         super.solution_found();
+        this.update_time();
         this.update_graph();
     }
 
@@ -121,6 +129,7 @@ class ReasonerD3 extends Reasoner {
 
     tick(message) {
         super.tick(message);
+        this.update_time();
     }
 
     graph(message) {
@@ -193,15 +202,6 @@ class ReasonerD3 extends Reasoner {
         for (const atm of message.end)
             this.atoms.get(atm).current = false;
         super.end(message);
-        this.update_timelines();
-    }
-
-    executing_changed(message) {
-        for (const atm of this.executing_tasks)
-            atm.current = false;
-        super.executing_changed(message);
-        for (const atm of this.executing_tasks)
-            atm.current = true;
         this.update_timelines();
     }
 
@@ -343,6 +343,36 @@ class ReasonerD3 extends Reasoner {
                 break;
         }
         wrap_text(this.scale);
+    }
+
+    update_time() {
+        if (this.timelines.size)
+            this.timelines_g.selectAll('g.time').data([this.current_time]).join(
+                enter => {
+                    const t_g = enter.append('g').attr('class', 'time');
+                    t_g.append('line')
+                        .attr('stroke-width', 2)
+                        .attr('stroke-linecap', 'round')
+                        .attr('stroke', 'lavender')
+                        .attr('stroke-opacity', 0.4)
+                        .attr('x1', this.timelines_x_scale(this.current_time))
+                        .attr('y1', 0).attr('x2', this.timelines_x_scale(this.current_time))
+                        .attr('y2', this.timelines_height);
+                    t_g.append('line')
+                        .attr('stroke-width', 0.2)
+                        .attr('stroke-linecap', 'round')
+                        .attr('stroke', 'black')
+                        .attr('x1', this.timelines_x_scale(this.current_time))
+                        .attr('y1', 0).attr('x2', this.timelines_x_scale(this.current_time))
+                        .attr('y2', this.timelines_height);
+                    return t_g;
+                },
+                update => {
+                    update.selectAll('line').transition().duration(200)
+                        .attr('x1', this.timelines_x_scale(this.current_time))
+                        .attr('x2', this.timelines_x_scale(this.current_time));
+                    return update;
+                });
     }
 
     update_graph() {

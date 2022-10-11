@@ -39,6 +39,9 @@ class Reasoner {
             this.timelines.set(tl.id, tl);
 
         this.executing_tasks.clear();
+        for (const atm of message.executing)
+            this.executing_tasks.add(this.atoms.get(atm));
+        this.current_time = message.time.num / message.time.den;
     }
 
     solution_found() {
@@ -240,12 +243,6 @@ class Reasoner {
     end(message) {
         for (const atm of message.end)
             this.executing_tasks.delete(this.atoms.get(atm));
-    }
-
-    executing_changed(message) {
-        this.executing_tasks.clear();
-        for (const atm of message.executing)
-            this.executing_tasks.add(this.atoms.get(atm));
     }
 
     timeline_name(tl) { return tl.name; }
