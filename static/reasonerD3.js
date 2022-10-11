@@ -1,4 +1,5 @@
 const color_interpolator = d3.scaleSequential(d3.interpolateRdYlGn).domain([15, 0]);
+const font_size = 14;
 
 class ReasonerD3 extends Reasoner {
 
@@ -20,9 +21,12 @@ class ReasonerD3 extends Reasoner {
         this.timelines_x_axis = d3.axisBottom(this.timelines_x_scale);
         this.timelines_axis_g.call(this.timelines_x_axis);
 
+        this.scale = 1;
         this.timelines_zoom = d3.zoom().on('zoom', event => {
             this.timelines_axis_g.call(this.timelines_x_axis.scale(event.transform.rescaleX(this.timelines_x_scale)));
             this.timelines_g.attr('transform', event.transform);
+            this.scale = event.transform.k;
+            wrap_text(this.scale);
         });
 
         timelines_svg.call(this.timelines_zoom);
@@ -152,24 +156,29 @@ class ReasonerD3 extends Reasoner {
                 const tl_g = enter.append('g')
                     .attr('class', 'timeline')
                     .attr('id', d => 'tl-' + d.id);
+
                 tl_g.append('rect')
                     .attr('x', -10)
                     .attr('y', d => this.timelines_y_scale(timelines.indexOf(d)))
                     .attr('width', this.timelines_x_scale(this.horizon) + 20)
                     .attr('height', this.timelines_y_scale.bandwidth())
                     .style('fill', 'floralwhite');
+
                 tl_g.append('text')
                     .attr('x', 0)
                     .attr('y', d => this.timelines_y_scale(timelines.indexOf(d)) + this.timelines_y_scale.bandwidth() * 0.08)
                     .text(d => this.timeline_name(d))
                     .style('text-anchor', 'start');
+
                 return tl_g;
             },
             update => {
                 update.select('rect').transition()
                     .attr('width', this.timelines_x_scale(this.horizon) + 20);
+
                 update.select('text')
                     .text(d => this.timeline_name(d));
+
                 return update;
             });
 
@@ -191,12 +200,15 @@ class ReasonerD3 extends Reasoner {
                         val.to = val.exprs.get('end').value.num / val.exprs.get('end').value.den;
                     }
                     val.y = values_y(val.from, val.from === val.to ? val.from + 0.1 : val.to, ends);
+                    val.text = this.ag_value_title(val);
                 }
                 const max_overlap = d3.max(tl.values, d => d.y) + 1;
                 const agent_y_scale = d3.scaleBand().domain(d3.range(max_overlap)).rangeRound([0, this.timelines_y_scale.bandwidth() * 0.9]).padding(0.1);
                 d3.select('#tl-' + tl.id).selectAll('g').data(tl.values).join(
                     enter => {
-                        const tl_val_g = enter.append('g');
+                        const tl_val_g = enter.append('g')
+                            .attr('class', 'wrappable');
+
                         tl_val_g.append('rect')
                             .attr('x', d => this.timelines_x_scale(d.from))
                             .attr('y', d => this.timelines_y_scale(i) + this.timelines_y_scale.bandwidth() * 0.1 + agent_y_scale(max_overlap - 1 - d.y))
@@ -206,14 +218,17 @@ class ReasonerD3 extends Reasoner {
                             .attr('ry', 5)
                             .style('fill', 'url(#ag-lg)')
                             .style('stroke', 'lightgray');
+
                         tl_val_g.append('text')
                             .attr('x', d => this.timelines_x_scale(d.from) + (d.from === d.to ? 1 : this.timelines_x_scale(d.to) - this.timelines_x_scale(d.from)) / 2)
                             .attr('y', d => this.timelines_y_scale(i) + this.timelines_y_scale.bandwidth() * 0.1 + agent_y_scale(max_overlap - 1 - d.y) + agent_y_scale.bandwidth() / 2)
-                            .text(d => this.ag_value_title(d))
+                            .text(d => d.text)
                             .style('text-anchor', 'middle');
+
                         tl_val_g.on('mouseover', (event, d) => this.tooltip.html(this.ag_value_content(d)).transition().duration(200).style('opacity', .9))
                             .on('mousemove', event => this.tooltip.style('left', (event.pageX) + 'px').style('top', (event.pageY - 28) + 'px'))
                             .on('mouseout', event => this.tooltip.transition().duration(500).style('opacity', 0));
+
                         return tl_val_g;
                     },
                     update => {
@@ -222,18 +237,32 @@ class ReasonerD3 extends Reasoner {
                             .attr('y', d => this.timelines_y_scale(i) + this.timelines_y_scale.bandwidth() * 0.1 + agent_y_scale(max_overlap - 1 - d.y))
                             .attr('width', d => d.from === d.to ? 1 : this.timelines_x_scale(d.to) - this.timelines_x_scale(d.from))
                             .attr('height', agent_y_scale.bandwidth() * 0.9);
+
                         update.select('text')
                             .text(d => this.ag_value_title(d))
                             .attr('x', d => this.timelines_x_scale(d.from) + (d.from === d.to ? 1 : this.timelines_x_scale(d.to) - this.timelines_x_scale(d.from)) / 2)
                             .attr('y', d => this.timelines_y_scale(i) + this.timelines_y_scale.bandwidth() * 0.1 + agent_y_scale(max_overlap - 1 - d.y) + agent_y_scale.bandwidth() / 2);
+
                         return update;
                     }
                 );
                 break;
             case 'StateVariable':
+                for (const val of tl.values) {
+                    if (val.exprs.has('at')) {
+                        val.from = val.exprs.get('at').value.num / val.exprs.get('at').value.den;
+                        val.to = val.from + 1;
+                    } else {
+                        val.from = val.exprs.get('start').value.num / val.exprs.get('start').value.den;
+                        val.to = val.exprs.get('end').value.num / val.exprs.get('end').value.den;
+                    }
+                    val.text = this.sv_value_name(val);
+                }
                 d3.select('#tl-' + i).selectAll('g').data(tl.values).join(
                     enter => {
-                        const tl_val_g = enter.append('g');
+                        const tl_val_g = enter.append('g')
+                            .attr('class', 'wrappable');
+
                         tl_val_g.append('rect')
                             .attr('x', d => this.timelines_x_scale(d.from))
                             .attr('y', d => this.timelines_y_scale(i) + this.timelines_y_scale.bandwidth() * 0.1)
@@ -243,30 +272,38 @@ class ReasonerD3 extends Reasoner {
                             .attr('ry', 5)
                             .style('fill', d => sv_value_fill(d))
                             .style('stroke', 'lightgray');
+
                         tl_val_g.append('text')
                             .attr('x', d => this.timelines_x_scale(d.from) + (this.timelines_x_scale(d.to) - this.timelines_x_scale(d.from)) / 2)
                             .attr('y', d => this.timelines_y_scale(i) + this.timelines_y_scale.bandwidth() * 0.5)
-                            .text(d => this.sv_value_name(d))
+                            .text(d => d.text)
                             .style('text-anchor', 'middle');
+
                         tl_val_g.on('mouseover', (event, d) => this.tooltip.html(this.sv_value_content(d)).transition().duration(200).style('opacity', .9))
                             .on('mousemove', event => this.tooltip.style('left', (event.pageX) + 'px').style('top', (event.pageY - 28) + 'px'))
                             .on('mouseout', event => this.tooltip.transition().duration(500).style('opacity', 0));
+
                         return tl_val_g;
                     },
                     update => {
                         update.select('rect').transition().duration(200)
                             .attr('x', d => this.timelines_x_scale(d.from))
-                            .attr('y', d => this.timelines_y_scale(i) + this.timelines_y_scale.bandwidth() * 0.1).attr('width', d => this.timelines_x_scale(d.to) - this.timelines_x_scale(d.from)).attr('height', this.timelines_y_scale.bandwidth() * 0.9).style('fill', d => sv_value_fill(d));
+                            .attr('y', d => this.timelines_y_scale(i) + this.timelines_y_scale.bandwidth() * 0.1).attr('width', d => this.timelines_x_scale(d.to) - this.timelines_x_scale(d.from))
+                            .attr('height', this.timelines_y_scale.bandwidth() * 0.9)
+                            .style('fill', d => sv_value_fill(d));
+
                         update.select('text')
                             .text(d => this.sv_value_name(d))
                             .transition().duration(200)
                             .attr('x', d => this.timelines_x_scale(d.from) + (this.timelines_x_scale(d.to) - this.timelines_x_scale(d.from)) / 2)
                             .attr('y', d => this.timelines_y_scale(i) + this.timelines_y_scale.bandwidth() * 0.5);
+
                         return update;
                     }
                 );
                 break;
         }
+        wrap_text(this.scale);
     }
 
     update_graph() {
@@ -329,8 +366,10 @@ class ReasonerD3 extends Reasoner {
                     .style('opacity', d => node_opacity(d)).transition().duration(500)
                     .style('stroke', d => stroke(d))
                     .style('stroke-width', d => stroke_width(d));
+
                 update.select('text')
                     .style('opacity', d => node_opacity(d));
+
                 return update;
             }
         );
@@ -455,4 +494,15 @@ function drag_ended(event, d) {
     d.fx = d.x;
     d.fy = d.y;
     d3.select(this).attr('cursor', 'grab');
+}
+
+function wrap_text(scale) {
+    for (const d of d3.selectAll('.wrappable').nodes()) {
+        if (scale > 1)
+            d.lastChild.style.fontSize = font_size / scale;
+        const width = d.firstChild.width.baseVal.value;
+        d.lastChild.textContent = d.__data__.text;
+        while (d.lastChild.getComputedTextLength() >= width)
+            d.lastChild.textContent = d.lastChild.textContent.slice(0, -1);
+    }
 }
