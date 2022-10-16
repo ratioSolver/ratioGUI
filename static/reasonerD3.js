@@ -127,6 +127,32 @@ class ReasonerD3 extends Reasoner {
                             usage: 0
                         });
                     break;
+                case 'ConsumableResource':
+                    tl.capacity = tl.capacity.num / tl.capacity.den;
+                    for (const val of tl.values) {
+                        val.from = val.from.num / val.from.den;
+                        val.to = val.to.num / val.to.den;
+                        val.start = val.start.num / val.start.den;
+                        val.end = val.end.num / val.end.den;
+                        val.atoms = val.atoms.map(atm_id => this.atoms.get(atm_id));
+                    }
+                    if (tl.values.length)
+                        tl.values.push({
+                            atoms: [],
+                            from: tl.values[tl.values.length - 1].to,
+                            to: this.horizon,
+                            start: tl.values[tl.values.length - 1].end,
+                            end: tl.values[tl.values.length - 1].end
+                        });
+                    else
+                        tl.values.push({
+                            atoms: [],
+                            from: this.origin,
+                            to: this.horizon,
+                            start: 0,
+                            end: 0
+                        });
+                    break;
             }
         for (const atm of this.executing_tasks)
             atm.current = true;
@@ -424,6 +450,70 @@ class ReasonerD3 extends Reasoner {
                             .attr('y1', d => rr_y_scale(d))
                             .attr('x2', this.timelines_x_scale(this.horizon))
                             .attr('y2', d => rr_y_scale(d));
+                        return update;
+                    }
+                );
+                break;
+            case 'ConsumableResource':
+                const cr_max_val = (tl.values.length ? Math.max(d3.max(tl.values, d => Math.max(d.start, d.end)), tl.capacity) : tl.capacity);
+                const cr_min_val = (tl.values.length ? Math.min(d3.min(tl.values, d => Math.min(d.start, d.end)), 0) : 0);
+                const cr_y_scale = d3.scaleLinear().domain([cr_min_val, cr_max_val + cr_max_val * 0.1]).range([this.timelines_y_scale(i) + this.timelines_y_scale.bandwidth(), this.timelines_y_scale(i)]);
+                const cr_g = d3.select('#tl-' + tl.id);
+                cr_g.selectAll('path').data([tl.values]).join(
+                    enter => {
+                        const tl_val_g = enter.append('path')
+                            .attr('fill', 'aliceblue')
+                            .attr('stroke', 'lightblue')
+                            .attr('d', d3.area().curve(d3.curveLinear)
+                                .x(d => this.timelines_x_scale(d.from))
+                                .y0(cr_y_scale(0))
+                                .y1(d => cr_y_scale(d.start)));
+
+                        tl_val_g
+                            .on('mouseover', (event, d) => {
+                                const i = bisect_value(d, this.timelines_x_scale.invert(d3.pointer(event)[0]));
+                                return this.tooltip.html(this.cr_value_content(d[i])).transition().duration(200).style('opacity', .9);
+                            })
+                            .on('mousemove', (event, d) => {
+                                const i = bisect_value(d, this.timelines_x_scale.invert(d3.pointer(event)[0]));
+                                this.tooltip.html(this.cr_value_content(d[i])).transition().duration(200).style('opacity', .9);
+                                return this.tooltip.style('left', (event.pageX) + 'px').style('top', (event.pageY - 28) + 'px');
+                            })
+                            .on('mouseout', event => this.tooltip.transition().duration(500).style('opacity', 0));
+
+                        return tl_val_g;
+                    },
+
+                    update => {
+                        update.transition().duration(200)
+                            .attr('d', d3.area().curve(d3.curveLinear)
+                                .x(d => this.timelines_x_scale(d.from))
+                                .y0(cr_y_scale(0))
+                                .y1(d => cr_y_scale(d.start)));
+
+                        return update;
+                    }
+                );
+                cr_g.selectAll('line').data([tl.capacity, 0]).join(
+                    enter => {
+                        const line_g = enter.append('line')
+                            .attr('stroke-width', 2)
+                            .attr('stroke-opacity', 0.8)
+                            .attr('stroke-linecap', 'round')
+                            .attr('stroke', 'darkslategray');
+                        line_g
+                            .attr('x1', this.timelines_x_scale(0))
+                            .attr('y1', d => cr_y_scale(d))
+                            .attr('x2', this.timelines_x_scale(this.horizon))
+                            .attr('y2', d => cr_y_scale(d));
+                        return line_g;
+                    },
+
+                    update => {
+                        update.transition().duration(200)
+                            .attr('y1', d => cr_y_scale(d))
+                            .attr('x2', this.timelines_x_scale(this.horizon))
+                            .attr('y2', d => cr_y_scale(d));
                         return update;
                     }
                 );

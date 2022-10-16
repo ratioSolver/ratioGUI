@@ -275,6 +275,14 @@ class Reasoner {
         }
     }
 
+    cr_value_content(cr_val) {
+        switch (cr_val.atoms.length) {
+            case 0: return cr_val.start + ': [' + cr_val.from + ', ' + cr_val.to + ']';
+            case 1: return cr_val.start + ' -> ' + cr_val.end + ': [' + cr_val.from + ', ' + cr_val.to + ']<br>' + this.atom_content(cr_val.atoms[0]);
+            default: return cr_val.start + ' -> ' + cr_val.end + ': [' + cr_val.from + ', ' + cr_val.to + ']' + Array.from(cr_val.atoms, atm => '<br>' + this.atom_content(atm)).join(', ');
+        }
+    }
+
     item_title(itm) { return itm.type + '(' + Array.from(itm.exprs.keys()).join(', ') + ')'; }
 
     item_content(itm) {
