@@ -320,7 +320,7 @@ class ReasonerD3 extends Reasoner {
                             .style('text-anchor', 'middle');
 
                         tl_val_g.on('mouseover', (event, d) => this.tooltip.html(this.ag_value_content(d)).transition().duration(200).style('opacity', .9))
-                            .on('mousemove', event => this.tooltip.style('left', (event.pageX) + 'px').style('top', (event.pageY - 28) + 'px'))
+                            .on('mousemove', event => this.tooltip.style('left', (event.pageX + 20) + 'px').style('top', (event.pageY - 28) + 'px'))
                             .on('mouseout', event => this.tooltip.transition().duration(500).style('opacity', 0));
 
                         return tl_val_g;
@@ -367,7 +367,7 @@ class ReasonerD3 extends Reasoner {
                             .style('text-anchor', 'middle');
 
                         tl_val_g.on('mouseover', (event, d) => this.tooltip.html(this.sv_value_content(d)).transition().duration(200).style('opacity', .9))
-                            .on('mousemove', event => this.tooltip.style('left', (event.pageX) + 'px').style('top', (event.pageY - 28) + 'px'))
+                            .on('mousemove', event => this.tooltip.style('left', (event.pageX + 20) + 'px').style('top', (event.pageY - 28) + 'px'))
                             .on('mouseout', event => this.tooltip.transition().duration(500).style('opacity', 0));
 
                         return tl_val_g;
@@ -413,7 +413,7 @@ class ReasonerD3 extends Reasoner {
                             .on('mousemove', (event, d) => {
                                 const i = bisect_value(d, this.timelines_x_scale.invert(d3.pointer(event)[0]), 1);
                                 this.tooltip.html(this.rr_value_content(d[i])).transition().duration(200).style('opacity', .9);
-                                return this.tooltip.style('left', (event.pageX) + 'px').style('top', (event.pageY - 28) + 'px');
+                                return this.tooltip.style('left', (event.pageX + 20) + 'px').style('top', (event.pageY - 28) + 'px');
                             })
                             .on('mouseout', event => this.tooltip.transition().duration(500).style('opacity', 0));
 
@@ -477,7 +477,7 @@ class ReasonerD3 extends Reasoner {
                             .on('mousemove', (event, d) => {
                                 const i = bisect_value(d, this.timelines_x_scale.invert(d3.pointer(event)[0]));
                                 this.tooltip.html(this.cr_value_content(d[i])).transition().duration(200).style('opacity', .9);
-                                return this.tooltip.style('left', (event.pageX) + 'px').style('top', (event.pageY - 28) + 'px');
+                                return this.tooltip.style('left', (event.pageX + 20) + 'px').style('top', (event.pageY - 28) + 'px');
                             })
                             .on('mouseout', event => this.tooltip.transition().duration(500).style('opacity', 0));
 
@@ -593,7 +593,7 @@ class ReasonerD3 extends Reasoner {
                     .style('text-anchor', 'middle').style('opacity', d => node_opacity(d));
 
                 g.on('mouseover', (event, d) => this.tooltip.html(d.title).transition().duration(200).style('opacity', 0.9))
-                    .on('mousemove', event => this.tooltip.style('left', (event.pageX) + 'px').style('top', (event.pageY - 28) + 'px'))
+                    .on('mousemove', event => this.tooltip.style('left', (event.pageX + 20) + 'px').style('top', (event.pageY - 28) + 'px'))
                     .on('mouseout', event => this.tooltip.transition().duration(500).style('opacity', 0))
                     .on('click', (event, d) => { d.fx = null; d.fy = null; });
 
@@ -734,7 +734,7 @@ function drag_started(event, d) {
 function dragging(event, d) {
     d.fx = event.x;
     d.fy = event.y;
-    d.reasoner.tooltip.style('left', (event.sourceEvent.pageX) + 'px').style('top', (event.sourceEvent.pageY - 28) + 'px');
+    d.reasoner.tooltip.style('left', (event.sourceEvent.pageX + 20) + 'px').style('top', (event.sourceEvent.pageY - 28) + 'px');
 }
 
 function drag_ended(event, d) {

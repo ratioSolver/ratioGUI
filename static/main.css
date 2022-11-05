@@ -10,4 +10,5 @@ div.tooltip {
     border-radius: 3px;
     margin: 3px;
     padding: 3px;
+    pointer-events: none;
 }
