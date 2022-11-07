@@ -283,7 +283,7 @@ class Reasoner {
         }
     }
 
-    item_title(itm) { return itm.type + '(' + Array.from(itm.exprs.keys()).join(', ') + ')'; }
+    item_title(itm) { return itm.type.split(":").pop() + '(' + Array.from(itm.exprs.keys()).join(', ') + ')'; }
 
     item_content(itm) {
         const pars = [];
@@ -292,7 +292,7 @@ class Reasoner {
         return itm.type + '(' + pars.join(',') + '<br>)';
     }
 
-    atom_title(atm) { return atm.type + '(' + Array.from(atm.exprs.keys()).filter(par => par != 'start' && par != 'end' && par != 'duration' && par != 'tau').map(par => this.val_to_string(atm.exprs.get(par))).join(', ') + ')'; }
+    atom_title(atm) { return atm.type.split(":").pop() + '(' + Array.from(atm.exprs.keys()).filter(par => par != 'start' && par != 'end' && par != 'duration' && par != 'tau').map(par => this.val_to_string(atm.exprs.get(par))).join(', ') + ')'; }
 
     atom_content(atm) {
         const pars = [];
