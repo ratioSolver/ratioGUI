@@ -254,8 +254,8 @@ class Reasoner {
     sv_value_title(sv_val) {
         switch (sv_val.atoms.length) {
             case 0: return '';
-            case 1: return this.atom_title(sv_val.atoms[0]);
-            default: return Array.from(sv_val.atoms, atm => this.atom_title(atm)).join(', ');
+            case 1: return this.atom_title(this.atoms.get(sv_val.atoms[0]));
+            default: return Array.from(sv_val.atoms, atm => this.atom_title(this.atoms.get(atm))).join(', ');
         }
     }
 
@@ -292,7 +292,7 @@ class Reasoner {
         return itm.type + '(' + pars.join(',') + '<br>)';
     }
 
-    atom_title(atm) { return atm.type + '(' + Array.from(atm.exprs.keys()).filter(par => par != 'start' && par != 'end' && par != 'duration' && par != 'tau').join(', ') + ')'; }
+    atom_title(atm) { return atm.type + '(' + Array.from(atm.exprs.keys()).filter(par => par != 'start' && par != 'end' && par != 'duration' && par != 'tau').map(par => this.val_to_string(atm.exprs.get(par))).join(', ') + ')'; }
 
     atom_content(atm) {
         const pars = [];

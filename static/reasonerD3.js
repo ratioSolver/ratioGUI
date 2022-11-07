@@ -16,6 +16,21 @@ class ReasonerD3 extends Reasoner {
         this.ag_lg.append('stop').attr('offset', '20%').style('stop-color', 'ivory').style('stop-opacity', 1);
         this.ag_lg.append('stop').attr('offset', '100%').style('stop-color', 'navajowhite').style('stop-opacity', 1);
 
+        this.sv_ok_lg = timelines_svg.append('defs').append('linearGradient').attr('id', 'sv-ok-lg').attr('x1', '0%').attr('x2', '0%').attr('y1', '0%').attr('y2', '100%');
+        this.sv_ok_lg.append('stop').attr('offset', '0%').style('stop-color', 'palegreen').style('stop-opacity', 1);
+        this.sv_ok_lg.append('stop').attr('offset', '20%').style('stop-color', 'ivory').style('stop-opacity', 1);
+        this.sv_ok_lg.append('stop').attr('offset', '100%').style('stop-color', 'palegreen').style('stop-opacity', 1);
+
+        this.sv_inc_lg = timelines_svg.append('defs').append('linearGradient').attr('id', 'sv-inc-lg').attr('x1', '0%').attr('x2', '0%').attr('y1', '0%').attr('y2', '100%');
+        this.sv_inc_lg.append('stop').attr('offset', '0%').style('stop-color', 'lightsalmon').style('stop-opacity', 1);
+        this.sv_inc_lg.append('stop').attr('offset', '20%').style('stop-color', 'ivory').style('stop-opacity', 1);
+        this.sv_inc_lg.append('stop').attr('offset', '100%').style('stop-color', 'lightsalmon').style('stop-opacity', 1);
+
+        this.sv_none_lg = timelines_svg.append('defs').append('linearGradient').attr('id', 'sv-none-lg').attr('x1', '0%').attr('x2', '0%').attr('y1', '0%').attr('y2', '100%');
+        this.sv_none_lg.append('stop').attr('offset', '0%').style('stop-color', 'lightgray').style('stop-opacity', 1);
+        this.sv_none_lg.append('stop').attr('offset', '20%').style('stop-color', 'ivory').style('stop-opacity', 1);
+        this.sv_none_lg.append('stop').attr('offset', '100%').style('stop-color', 'lightgray').style('stop-opacity', 1);
+
         this.timelines_g = timelines_svg.append('g');
 
         this.timelines_height = height;
@@ -100,7 +115,7 @@ class ReasonerD3 extends Reasoner {
                     for (const val of tl.values) {
                         val.from = val.from.num / val.from.den;
                         val.to = val.to.num / val.to.den;
-                        val.text = this.sv_value_name(val);
+                        val.text = this.sv_value_title(val);
                         val.atoms = val.atoms.map(atm_id => this.atoms.get(atm_id));
                     }
                     break;
@@ -665,6 +680,14 @@ function values_y(start, end, ends) {
         }
     ends.push(end);
     return ends.length - 1;
+}
+
+function sv_value_fill(sv_value) {
+    switch (sv_value.atoms.length) {
+        case 0: return 'url(#sv-none-lg)';
+        case 1: return 'url(#sv-ok-lg)';
+        default: return 'url(#sv-inc-lg)';
+    }
 }
 
 function value_stroke(n) {
