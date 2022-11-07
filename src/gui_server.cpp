@@ -132,13 +132,6 @@ namespace ratio::gui
         j_fc["causes"] = std::move(j_causes);
         j_fc["state"] = slv.get_sat_core()->value(f.get_phi());
         j_fc["cost"] = to_json(f.get_estimated_cost());
-        auto [lb, ub] = f.get_solver().get_idl_theory().bounds(f.get_position());
-        json::json j_pos;
-        if (lb > std::numeric_limits<semitone::I>::min())
-            j_pos["lb"] = lb;
-        if (ub > std::numeric_limits<semitone::I>::max())
-            j_pos["ub"] = ub;
-        j_fc["pos"] = std::move(j_pos);
         j_fc["data"] = f.get_data();
 
         broadcast(j_fc.dump());
@@ -174,9 +167,9 @@ namespace ratio::gui
         j_fpc["id"] = get_id(f);
         auto [lb, ub] = f.get_solver().get_idl_theory().bounds(f.get_position());
         json::json j_pos;
-        if (lb > std::numeric_limits<semitone::I>::min())
+        if (lb > -semitone::idl_theory::inf())
             j_pos["lb"] = lb;
-        if (ub > std::numeric_limits<semitone::I>::max())
+        if (ub < semitone::idl_theory::inf())
             j_pos["ub"] = ub;
         j_fpc["pos"] = std::move(j_pos);
 

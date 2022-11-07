@@ -122,7 +122,7 @@ class Reasoner {
             causes: message.causes,
             state: message.state,
             cost: message.cost.num / message.cost.den,
-            pos: message.pos,
+            pos: { lb: 0 },
             data: message.data
         };
         flaw.label = this.flaw_label(flaw);
