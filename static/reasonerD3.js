@@ -305,6 +305,7 @@ class ReasonerD3 extends Reasoner {
 
         for (const [i, tl] of timelines.entries())
             this.update_timeline(i, tl);
+        wrap_text(this.scale);
     }
 
     update_timeline(i, tl) {
@@ -534,7 +535,6 @@ class ReasonerD3 extends Reasoner {
                 );
                 break;
         }
-        wrap_text(this.scale);
     }
 
     update_time() {
@@ -773,7 +773,10 @@ function wrap_text(scale) {
             d.lastChild.style.fontSize = font_size / scale;
         const width = d.firstChild.width.baseVal.value;
         d.lastChild.textContent = d3.select(d).datum().text;
-        while (d.lastChild.getComputedTextLength() >= width - 5)
+        let length = d.lastChild.getComputedTextLength();
+        while (length > 0 && length >= width - 5) {
             d.lastChild.textContent = d.lastChild.textContent.slice(0, -1);
+            length = d.lastChild.getComputedTextLength();
+        }
     }
 }

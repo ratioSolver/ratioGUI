@@ -315,5 +315,6 @@ namespace ratio::gui
     {
         for (const auto &u : users)
             u->send_text(msg);
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 } // namespace ratio::gui
