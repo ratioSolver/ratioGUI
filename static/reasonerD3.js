@@ -463,6 +463,7 @@ class ReasonerD3 extends Reasoner {
 
                     update => {
                         update.transition().duration(200)
+                            .attr('x1', this.timelines_x_scale(0))
                             .attr('y1', d => rr_y_scale(d))
                             .attr('x2', this.timelines_x_scale(this.horizon))
                             .attr('y2', d => rr_y_scale(d));

@@ -49,7 +49,9 @@ namespace ratio::gui
             .onclose([&](crow::websocket::connection &conn, [[maybe_unused]] const std::string &reason)
                      { std::lock_guard<std::mutex> _(mtx); users.erase(&conn); })
             .onmessage([&]([[maybe_unused]] crow::websocket::connection &conn, [[maybe_unused]] const std::string &data, [[maybe_unused]] bool is_binary)
-                       { if(data == "tick") exec.tick(); });
+                       { if(data == "tick") {
+                             if(!exec.is_executing()) exec.start_execution();
+                             exec.tick(); } });
     }
 
     void gui_server::start() { app.bindaddr(host).port(port).run(); }
