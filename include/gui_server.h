@@ -10,14 +10,14 @@ namespace ratio::gui
 {
   class timeline_extractor;
 
-  class gui_server : public ratio::core::core_listener, public ratio::solver::solver_listener, public ratio::executor::executor_listener
+  class gui_server : public riddle::core_listener, public ratio::solver_listener, public ratio::executor::executor_listener
   {
     friend class timeline_extractor;
 
   public:
     gui_server(ratio::executor::executor &exec, const std::string &host = "127.0.0.1", const unsigned short port = 8080);
 
-    ratio::solver::solver &get_solver() { return slv; }
+    ratio::solver &get_solver() { return slv; }
     ratio::executor::executor &get_executor() { return exec; }
 
     void start();
@@ -36,36 +36,36 @@ namespace ratio::gui
     void inconsistent_problem() override;
 
   private:
-    void flaw_created(const ratio::solver::flaw &f) override;
-    void flaw_state_changed(const ratio::solver::flaw &f) override;
-    void flaw_cost_changed(const ratio::solver::flaw &f) override;
-    void flaw_position_changed(const ratio::solver::flaw &f) override;
-    void current_flaw(const ratio::solver::flaw &f) override;
+    void flaw_created(const ratio::flaw &f) override;
+    void flaw_state_changed(const ratio::flaw &f) override;
+    void flaw_cost_changed(const ratio::flaw &f) override;
+    void flaw_position_changed(const ratio::flaw &f) override;
+    void current_flaw(const ratio::flaw &f) override;
 
-    void resolver_created(const ratio::solver::resolver &r) override;
-    void resolver_state_changed(const ratio::solver::resolver &r) override;
-    void current_resolver(const ratio::solver::resolver &r) override;
+    void resolver_created(const ratio::resolver &r) override;
+    void resolver_state_changed(const ratio::resolver &r) override;
+    void current_resolver(const ratio::resolver &r) override;
 
-    void causal_link_added(const ratio::solver::flaw &f, const ratio::solver::resolver &r) override;
+    void causal_link_added(const ratio::flaw &f, const ratio::resolver &r) override;
 
   private:
-    void tick(const semitone::rational &time) override;
-    void starting(const std::unordered_set<ratio::core::atom *> &atoms) override;
-    void start(const std::unordered_set<ratio::core::atom *> &atoms) override;
-    void ending(const std::unordered_set<ratio::core::atom *> &atoms) override;
-    void end(const std::unordered_set<ratio::core::atom *> &atoms) override;
+    void tick(const utils::rational &time) override;
+    void starting(const std::unordered_set<ratio::atom *> &atoms) override;
+    void start(const std::unordered_set<ratio::atom *> &atoms) override;
+    void ending(const std::unordered_set<ratio::atom *> &atoms) override;
+    void end(const std::unordered_set<ratio::atom *> &atoms) override;
 
   private:
     void broadcast(const std::string &msg);
 
   private:
     ratio::executor::executor &exec;
-    std::unordered_set<const ratio::solver::flaw *> flaws;
-    const ratio::solver::flaw *c_flaw = nullptr;
-    std::unordered_set<const ratio::solver::resolver *> resolvers;
-    const ratio::solver::resolver *c_resolver = nullptr;
-    semitone::rational current_time;
-    std::unordered_set<ratio::core::atom *> executing;
+    std::unordered_set<const ratio::flaw *> flaws;
+    const ratio::flaw *c_flaw = nullptr;
+    std::unordered_set<const ratio::resolver *> resolvers;
+    const ratio::resolver *c_resolver = nullptr;
+    utils::rational current_time;
+    std::unordered_set<ratio::atom *> executing;
     const std::string host;
     const unsigned short port;
     crow::SimpleApp app;

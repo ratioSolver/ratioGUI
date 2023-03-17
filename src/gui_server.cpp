@@ -1,6 +1,6 @@
 #include "gui_server.h"
 #include "item.h"
-#include "predicate.h"
+#include "type.h"
 
 namespace ratio::gui
 {
@@ -24,28 +24,28 @@ namespace ratio::gui
                 j_sc["type"] = "state_changed";
                 j_sc["state"] = to_json(exec.get_solver());
                 j_sc["timelines"] = to_timelines(exec.get_solver());
-                json::array j_executing;
+                json::json j_executing(json::json_type::array);
                 for (const auto &atm : executing)
                     j_executing.push_back(get_id(*atm));
                 j_sc["executing"] = std::move(j_executing);
                 j_sc["time"] = to_json(current_time);
-                conn.send_text(j_sc.dump());
+                conn.send_text(j_sc.to_string());
 
                 json::json j_gr;
                 j_gr["type"] = "graph";
-                json::array j_flaws;
+                json::json j_flaws(json::json_type::array);
                 for (const auto &f : flaws)
                     j_flaws.push_back(to_json(*f));
                 j_gr["flaws"] = std::move(j_flaws);
                 if (c_flaw)
                     j_gr["current_flaw"] = get_id(*c_flaw);
-                json::array j_resolvers;
+                json::json j_resolvers(json::json_type::array);
                 for (const auto &r : resolvers)
                     j_resolvers.push_back(to_json(*r));
                 j_gr["resolvers"] = std::move(j_resolvers);
                 if (c_resolver)
                     j_gr["current_resolver"] = get_id(*c_resolver);
-                conn.send_text(j_gr.dump()); })
+                conn.send_text(j_gr.to_string()); })
             .onclose([&](crow::websocket::connection &conn, [[maybe_unused]] const std::string &reason)
                      { std::lock_guard<std::mutex> _(mtx); users.erase(&conn); })
             .onmessage([&]([[maybe_unused]] crow::websocket::connection &conn, [[maybe_unused]] const std::string &data, [[maybe_unused]] bool is_binary)
@@ -68,13 +68,13 @@ namespace ratio::gui
         j_sc["type"] = "state_changed";
         j_sc["state"] = to_json(exec.get_solver());
         j_sc["timelines"] = to_timelines(exec.get_solver());
-        json::array j_executing;
+        json::json j_executing(json::json_type::array);
         for (const auto &atm : executing)
             j_executing.push_back(get_id(*atm));
         j_sc["executing"] = std::move(j_executing);
         j_sc["time"] = to_json(current_time);
 
-        broadcast(j_sc.dump());
+        broadcast(j_sc.to_string());
     }
 
     void gui_server::started_solving()
@@ -84,7 +84,7 @@ namespace ratio::gui
         json::json j_ss;
         j_ss["type"] = "started_solving";
 
-        broadcast(j_ss.dump());
+        broadcast(j_ss.to_string());
     }
     void gui_server::solution_found()
     {
@@ -96,13 +96,13 @@ namespace ratio::gui
         j_sf["type"] = "solution_found";
         j_sf["state"] = to_json(exec.get_solver());
         j_sf["timelines"] = to_timelines(exec.get_solver());
-        json::array j_executing;
+        json::json j_executing(json::json_type::array);
         for (const auto &atm : executing)
             j_executing.push_back(get_id(*atm));
         j_sf["executing"] = std::move(j_executing);
         j_sf["time"] = to_json(current_time);
 
-        broadcast(j_sf.dump());
+        broadcast(j_sf.to_string());
     }
     void gui_server::inconsistent_problem()
     {
@@ -113,48 +113,31 @@ namespace ratio::gui
         json::json j_ip;
         j_ip["type"] = "inconsistent_problem";
 
-        broadcast(j_ip.dump());
+        broadcast(j_ip.to_string());
     }
 
-    void gui_server::flaw_created(const ratio::solver::flaw &f)
+    void gui_server::flaw_created(const ratio::flaw &f)
     {
         std::lock_guard<std::mutex> _(mtx);
         flaws.insert(&f);
 
-        json::json j_fc;
+        json::json j_fc = to_json(f);
         j_fc["type"] = "flaw_created";
-        j_fc["id"] = get_id(f);
-        j_fc["phi"] = to_string(f.get_phi());
-        json::array j_causes;
-        j_causes.reserve(f.get_causes().size());
-        for (const auto &c : f.get_causes())
-            j_causes.push_back(get_id(*c));
-        j_fc["causes"] = std::move(j_causes);
-        j_fc["state"] = slv.get_sat_core()->value(f.get_phi());
-        j_fc["cost"] = to_json(f.get_estimated_cost());
-        auto [lb, ub] = f.get_solver().get_idl_theory().bounds(f.get_position());
-        json::json j_pos;
-        if (lb > std::numeric_limits<semitone::I>::min())
-            j_pos["lb"] = lb;
-        if (ub > std::numeric_limits<semitone::I>::max())
-            j_pos["ub"] = ub;
-        j_fc["pos"] = std::move(j_pos);
-        j_fc["data"] = f.get_data();
 
-        broadcast(j_fc.dump());
+        broadcast(j_fc.to_string());
     }
-    void gui_server::flaw_state_changed(const ratio::solver::flaw &f)
+    void gui_server::flaw_state_changed(const ratio::flaw &f)
     {
         std::lock_guard<std::mutex> _(mtx);
 
         json::json j_fsc;
         j_fsc["type"] = "flaw_state_changed";
         j_fsc["id"] = get_id(f);
-        j_fsc["state"] = slv.get_sat_core()->value(f.get_phi());
+        j_fsc["state"] = slv.get_sat_core().value(f.get_phi());
 
-        broadcast(j_fsc.dump());
+        broadcast(j_fsc.to_string());
     }
-    void gui_server::flaw_cost_changed(const ratio::solver::flaw &f)
+    void gui_server::flaw_cost_changed(const ratio::flaw &f)
     {
         std::lock_guard<std::mutex> _(mtx);
 
@@ -163,26 +146,20 @@ namespace ratio::gui
         j_fcc["id"] = get_id(f);
         j_fcc["cost"] = to_json(f.get_estimated_cost());
 
-        broadcast(j_fcc.dump());
+        broadcast(j_fcc.to_string());
     }
-    void gui_server::flaw_position_changed(const ratio::solver::flaw &f)
+    void gui_server::flaw_position_changed(const ratio::flaw &f)
     {
         std::lock_guard<std::mutex> _(mtx);
 
         json::json j_fpc;
         j_fpc["type"] = "flaw_position_changed";
         j_fpc["id"] = get_id(f);
-        auto [lb, ub] = f.get_solver().get_idl_theory().bounds(f.get_position());
-        json::json j_pos;
-        if (lb > std::numeric_limits<semitone::I>::min())
-            j_pos["lb"] = lb;
-        if (ub > std::numeric_limits<semitone::I>::max())
-            j_pos["ub"] = ub;
-        j_fpc["pos"] = std::move(j_pos);
+        j_fpc["pos"] = to_json(f.get_solver().get_idl_theory().bounds(f.get_position()));
 
-        broadcast(j_fpc.dump());
+        broadcast(j_fpc.to_string());
     }
-    void gui_server::current_flaw(const ratio::solver::flaw &f)
+    void gui_server::current_flaw(const ratio::flaw &f)
     {
         std::lock_guard<std::mutex> _(mtx);
         c_flaw = &f;
@@ -192,42 +169,31 @@ namespace ratio::gui
         j_cf["type"] = "current_flaw";
         j_cf["id"] = get_id(f);
 
-        broadcast(j_cf.dump());
+        broadcast(j_cf.to_string());
     }
 
-    void gui_server::resolver_created(const ratio::solver::resolver &r)
+    void gui_server::resolver_created(const ratio::resolver &r)
     {
         std::lock_guard<std::mutex> _(mtx);
         resolvers.insert(&r);
 
-        json::json j_rc;
+        json::json j_rc = to_json(r);
         j_rc["type"] = "resolver_created";
-        j_rc["id"] = get_id(r);
-        j_rc["rho"] = to_string(r.get_rho());
-        json::array j_preconditions;
-        j_preconditions.reserve(r.get_preconditions().size());
-        for (const auto &pre : r.get_preconditions())
-            j_preconditions.push_back(get_id(*pre));
-        j_rc["preconditions"] = std::move(j_preconditions);
-        j_rc["effect"] = get_id(r.get_effect());
-        j_rc["state"] = slv.get_sat_core()->value(r.get_rho());
-        j_rc["intrinsic_cost"] = to_json(r.get_intrinsic_cost());
-        j_rc["data"] = r.get_data();
 
-        broadcast(j_rc.dump());
+        broadcast(j_rc.to_string());
     }
-    void gui_server::resolver_state_changed(const ratio::solver::resolver &r)
+    void gui_server::resolver_state_changed(const ratio::resolver &r)
     {
         std::lock_guard<std::mutex> _(mtx);
 
         json::json j_rsc;
         j_rsc["type"] = "resolver_state_changed";
         j_rsc["id"] = get_id(r);
-        j_rsc["state"] = slv.get_sat_core()->value(r.get_rho());
+        j_rsc["state"] = slv.get_sat_core().value(r.get_rho());
 
-        broadcast(j_rsc.dump());
+        broadcast(j_rsc.to_string());
     }
-    void gui_server::current_resolver(const ratio::solver::resolver &r)
+    void gui_server::current_resolver(const ratio::resolver &r)
     {
         std::lock_guard<std::mutex> _(mtx);
         c_resolver = &r;
@@ -236,10 +202,10 @@ namespace ratio::gui
         j_cr["type"] = "current_resolver";
         j_cr["id"] = get_id(r);
 
-        broadcast(j_cr.dump());
+        broadcast(j_cr.to_string());
     }
 
-    void gui_server::causal_link_added(const ratio::solver::flaw &f, const ratio::solver::resolver &r)
+    void gui_server::causal_link_added(const ratio::flaw &f, const ratio::resolver &r)
     {
         std::lock_guard<std::mutex> _(mtx);
 
@@ -248,10 +214,10 @@ namespace ratio::gui
         j_cla["flaw_id"] = get_id(f);
         j_cla["resolver_id"] = get_id(r);
 
-        broadcast(j_cla.dump());
+        broadcast(j_cla.to_string());
     }
 
-    void gui_server::tick(const semitone::rational &time)
+    void gui_server::tick(const utils::rational &time)
     {
         std::lock_guard<std::mutex> _(mtx);
         current_time = time;
@@ -260,49 +226,49 @@ namespace ratio::gui
         j_t["type"] = "tick";
         j_t["time"] = to_json(time);
 
-        broadcast(j_t.dump());
+        broadcast(j_t.to_string());
     }
-    void gui_server::starting(const std::unordered_set<ratio::core::atom *> &atoms)
+    void gui_server::starting(const std::unordered_set<ratio::atom *> &atoms)
     {
         std::lock_guard<std::mutex> _(mtx);
 
         json::json j_st;
         j_st["type"] = "starting";
-        json::array starting;
+        json::json starting(json::json_type::array);
         for (const auto &a : atoms)
             starting.push_back(get_id(*a));
         j_st["starting"] = std::move(starting);
 
-        broadcast(j_st.dump());
+        broadcast(j_st.to_string());
     }
-    void gui_server::start(const std::unordered_set<ratio::core::atom *> &atoms)
+    void gui_server::start(const std::unordered_set<ratio::atom *> &atoms)
     {
         std::lock_guard<std::mutex> _(mtx);
         executing.insert(atoms.cbegin(), atoms.cend());
 
         json::json j_st;
         j_st["type"] = "start";
-        json::array start;
+        json::json start(json::json_type::array);
         for (const auto &a : atoms)
             start.push_back(get_id(*a));
         j_st["start"] = std::move(start);
 
-        broadcast(j_st.dump());
+        broadcast(j_st.to_string());
     }
-    void gui_server::ending(const std::unordered_set<ratio::core::atom *> &atoms)
+    void gui_server::ending(const std::unordered_set<ratio::atom *> &atoms)
     {
         std::lock_guard<std::mutex> _(mtx);
 
         json::json j_en;
         j_en["type"] = "ending";
-        json::array ending;
+        json::json ending(json::json_type::array);
         for (const auto &a : atoms)
             ending.push_back(get_id(*a));
         j_en["ending"] = std::move(ending);
 
-        broadcast(j_en.dump());
+        broadcast(j_en.to_string());
     }
-    void gui_server::end(const std::unordered_set<ratio::core::atom *> &atoms)
+    void gui_server::end(const std::unordered_set<ratio::atom *> &atoms)
     {
         std::lock_guard<std::mutex> _(mtx);
         for (const auto &a : atoms)
@@ -310,12 +276,12 @@ namespace ratio::gui
 
         json::json j_en;
         j_en["type"] = "end";
-        json::array end;
+        json::json end(json::json_type::array);
         for (const auto &a : atoms)
             end.push_back(get_id(*a));
         j_en["end"] = std::move(end);
 
-        broadcast(j_en.dump());
+        broadcast(j_en.to_string());
     }
 
     void gui_server::broadcast(const std::string &msg)

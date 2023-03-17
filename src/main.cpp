@@ -32,7 +32,7 @@ int main(int argc, char const *argv[])
 #endif
     std::cout << "..\n";
 
-    ratio::solver::solver s;
+    ratio::solver s;
     ratio::executor::executor exec(s);
     ratio::gui::gui_server srv(exec, LOCALHOST_ADDRESS);
 
@@ -59,7 +59,7 @@ int main(int argc, char const *argv[])
 
         std::ofstream sol_file;
         sol_file.open(sol_name);
-        sol_file << ratio::solver::to_json(s).dump();
+        sol_file << to_json(s).to_string();
         sol_file.close();
     }
     catch (const std::exception &ex)
