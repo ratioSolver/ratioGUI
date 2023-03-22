@@ -20,19 +20,17 @@ namespace ratio::gui
                     { std::lock_guard<std::mutex> _(mtx);
                 users.insert(&conn);
 
-                json::json j_sc;
-                j_sc["type"] = "state_changed";
-                j_sc["state"] = to_json(exec.get_solver());
-                j_sc["timelines"] = to_timelines(exec.get_solver());
+                json::json j_sc{{"type", "state_changed"},
+                                {"state", to_json(exec.get_solver())},
+                                {"timelines", to_timelines(exec.get_solver())},
+                                {"time", to_json(current_time)}};
                 json::json j_executing(json::json_type::array);
                 for (const auto &atm : executing)
                     j_executing.push_back(get_id(*atm));
                 j_sc["executing"] = std::move(j_executing);
-                j_sc["time"] = to_json(current_time);
                 conn.send_text(j_sc.to_string());
 
-                json::json j_gr;
-                j_gr["type"] = "graph";
+                json::json j_gr{{"type", "graph"}};
                 json::json j_flaws(json::json_type::array);
                 for (const auto &f : flaws)
                     j_flaws.push_back(to_json(*f));
@@ -64,15 +62,11 @@ namespace ratio::gui
     {
         std::lock_guard<std::mutex> _(mtx);
 
-        json::json j_sc;
-        j_sc["type"] = "state_changed";
-        j_sc["state"] = to_json(exec.get_solver());
-        j_sc["timelines"] = to_timelines(exec.get_solver());
+        json::json j_sc{{"type", "state_changed"}, {"state", to_json(exec.get_solver())}, {"timelines", to_timelines(exec.get_solver())}, {"time", to_json(current_time)}};
         json::json j_executing(json::json_type::array);
         for (const auto &atm : executing)
             j_executing.push_back(get_id(*atm));
         j_sc["executing"] = std::move(j_executing);
-        j_sc["time"] = to_json(current_time);
 
         broadcast(j_sc.to_string());
     }
@@ -81,8 +75,7 @@ namespace ratio::gui
     {
         std::lock_guard<std::mutex> _(mtx);
 
-        json::json j_ss;
-        j_ss["type"] = "started_solving";
+        json::json j_ss{{"type", "started_solving"}};
 
         broadcast(j_ss.to_string());
     }
@@ -92,15 +85,11 @@ namespace ratio::gui
         c_flaw = nullptr;
         c_resolver = nullptr;
 
-        json::json j_sf;
-        j_sf["type"] = "solution_found";
-        j_sf["state"] = to_json(exec.get_solver());
-        j_sf["timelines"] = to_timelines(exec.get_solver());
+        json::json j_sf{{"type", "solution_found"}, {"state", to_json(exec.get_solver())}, {"timelines", to_timelines(exec.get_solver())}, {"time", to_json(current_time)}};
         json::json j_executing(json::json_type::array);
         for (const auto &atm : executing)
             j_executing.push_back(get_id(*atm));
         j_sf["executing"] = std::move(j_executing);
-        j_sf["time"] = to_json(current_time);
 
         broadcast(j_sf.to_string());
     }
@@ -110,8 +99,7 @@ namespace ratio::gui
         c_flaw = nullptr;
         c_resolver = nullptr;
 
-        json::json j_ip;
-        j_ip["type"] = "inconsistent_problem";
+        json::json j_ip{{"type", "inconsistent_problem"}};
 
         broadcast(j_ip.to_string());
     }
@@ -130,10 +118,7 @@ namespace ratio::gui
     {
         std::lock_guard<std::mutex> _(mtx);
 
-        json::json j_fsc;
-        j_fsc["type"] = "flaw_state_changed";
-        j_fsc["id"] = get_id(f);
-        j_fsc["state"] = slv.get_sat_core().value(f.get_phi());
+        json::json j_fsc{{"type", "flaw_state_changed"}, {"id", get_id(f)}, {"state", exec.get_solver().get_sat_core().value(f.get_phi())}};
 
         broadcast(j_fsc.to_string());
     }
@@ -141,10 +126,7 @@ namespace ratio::gui
     {
         std::lock_guard<std::mutex> _(mtx);
 
-        json::json j_fcc;
-        j_fcc["type"] = "flaw_cost_changed";
-        j_fcc["id"] = get_id(f);
-        j_fcc["cost"] = to_json(f.get_estimated_cost());
+        json::json j_fcc{{"type", "flaw_cost_changed"}, {"id", get_id(f)}, {"cost", to_json(f.get_estimated_cost())}};
 
         broadcast(j_fcc.to_string());
     }
@@ -152,10 +134,7 @@ namespace ratio::gui
     {
         std::lock_guard<std::mutex> _(mtx);
 
-        json::json j_fpc;
-        j_fpc["type"] = "flaw_position_changed";
-        j_fpc["id"] = get_id(f);
-        j_fpc["pos"] = to_json(f.get_solver().get_idl_theory().bounds(f.get_position()));
+        json::json j_fpc{{"type", "flaw_position_changed"}, {"id", get_id(f)}, {"pos", to_json(f.get_solver().get_idl_theory().bounds(f.get_position()))}};
 
         broadcast(j_fpc.to_string());
     }
@@ -165,9 +144,7 @@ namespace ratio::gui
         c_flaw = &f;
         c_resolver = nullptr;
 
-        json::json j_cf;
-        j_cf["type"] = "current_flaw";
-        j_cf["id"] = get_id(f);
+        json::json j_cf{{"type", "current_flaw"}, {"id", get_id(f)}};
 
         broadcast(j_cf.to_string());
     }
@@ -186,10 +163,7 @@ namespace ratio::gui
     {
         std::lock_guard<std::mutex> _(mtx);
 
-        json::json j_rsc;
-        j_rsc["type"] = "resolver_state_changed";
-        j_rsc["id"] = get_id(r);
-        j_rsc["state"] = slv.get_sat_core().value(r.get_rho());
+        json::json j_rsc{{"type", "resolver_state_changed"}, {"id", get_id(r)}, {"state", exec.get_solver().get_sat_core().value(r.get_rho())}};
 
         broadcast(j_rsc.to_string());
     }
@@ -198,9 +172,7 @@ namespace ratio::gui
         std::lock_guard<std::mutex> _(mtx);
         c_resolver = &r;
 
-        json::json j_cr;
-        j_cr["type"] = "current_resolver";
-        j_cr["id"] = get_id(r);
+        json::json j_cr{{"type", "current_resolver"}, {"id", get_id(r)}};
 
         broadcast(j_cr.to_string());
     }
@@ -209,10 +181,7 @@ namespace ratio::gui
     {
         std::lock_guard<std::mutex> _(mtx);
 
-        json::json j_cla;
-        j_cla["type"] = "causal_link_added";
-        j_cla["flaw_id"] = get_id(f);
-        j_cla["resolver_id"] = get_id(r);
+        json::json j_cla{{"type", "causal_link_added"}, {"flaw_id", get_id(f)}, {"resolver_id", get_id(r)}};
 
         broadcast(j_cla.to_string());
     }
@@ -222,9 +191,7 @@ namespace ratio::gui
         std::lock_guard<std::mutex> _(mtx);
         current_time = time;
 
-        json::json j_t;
-        j_t["type"] = "tick";
-        j_t["time"] = to_json(time);
+        json::json j_t{{"type", "tick"}, {"time", to_json(time)}};
 
         broadcast(j_t.to_string());
     }
@@ -232,8 +199,7 @@ namespace ratio::gui
     {
         std::lock_guard<std::mutex> _(mtx);
 
-        json::json j_st;
-        j_st["type"] = "starting";
+        json::json j_st{{"type", "starting"}};
         json::json starting(json::json_type::array);
         for (const auto &a : atoms)
             starting.push_back(get_id(*a));
@@ -246,8 +212,7 @@ namespace ratio::gui
         std::lock_guard<std::mutex> _(mtx);
         executing.insert(atoms.cbegin(), atoms.cend());
 
-        json::json j_st;
-        j_st["type"] = "start";
+        json::json j_st{{"type", "start"}};
         json::json start(json::json_type::array);
         for (const auto &a : atoms)
             start.push_back(get_id(*a));
@@ -259,8 +224,7 @@ namespace ratio::gui
     {
         std::lock_guard<std::mutex> _(mtx);
 
-        json::json j_en;
-        j_en["type"] = "ending";
+        json::json j_en{{"type", "ending"}};
         json::json ending(json::json_type::array);
         for (const auto &a : atoms)
             ending.push_back(get_id(*a));
@@ -274,8 +238,7 @@ namespace ratio::gui
         for (const auto &a : atoms)
             executing.erase(a);
 
-        json::json j_en;
-        j_en["type"] = "end";
+        json::json j_en{{"type", "end"}};
         json::json end(json::json_type::array);
         for (const auto &a : atoms)
             end.push_back(get_id(*a));
