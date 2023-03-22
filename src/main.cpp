@@ -63,6 +63,8 @@ int main(int argc, char const *argv[])
         sol_file.open(sol_name);
         sol_file << to_json(s).to_string();
         sol_file.close();
+
+        exec.start_execution();
     }
     catch (const std::exception &ex)
     {
