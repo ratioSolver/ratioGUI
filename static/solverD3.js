@@ -694,15 +694,33 @@ function sv_value_fill(sv_value) {
 }
 
 function value_stroke(n) {
-    return n.current ? 'dimgray' : 'lightgray';
+    if (n.atoms) {
+        for (const atm of n.atoms)
+            if (atm.current)
+                return 'dimgray';
+    } else if (n.current)
+        return 'dimgray';
+    return 'lightgray';
 }
 
 function node_stroke(n) {
-    return n.current ? '#ff00ff' : '#262626';
+    if (n.atoms) {
+        for (const atm of n.atoms)
+            if (atm.current)
+                return '#ff00ff';
+    } else if (n.current)
+        return '#ff00ff';
+    return '#262626';
 }
 
 function stroke_width(n) {
-    return n.current ? '2' : '1';
+    if (n.atoms) {
+        for (const atm of n.atoms)
+            if (atm.current)
+                return 2;
+    } else if (n.current)
+        return 2;
+    return 1;
 }
 
 function stroke_dasharray(n) {
