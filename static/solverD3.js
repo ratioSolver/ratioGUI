@@ -88,6 +88,12 @@ export class SolverD3 extends Solver {
         this.tooltip = d3.select('body').append('div') // the tooltip always 'exists' as its own html div, even when not visible
             .style('position', 'absolute') // the absolute position is necessary so that we can manually define its position later
             .style('opacity', 0) // hide it from default at the start so it only appears on hover
+            .style("background-color", "white")
+            .style("border", "solid")
+            .style("border-width", "1px")
+            .style("border-radius", "5px")
+            .style("padding", "3px")
+            .style("font-size", "12px")
             .attr('class', 'tooltip');
     }
 
