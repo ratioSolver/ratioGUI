@@ -6,41 +6,41 @@ const font_size = 14;
 
 export class SolverD3 extends Solver {
 
-    constructor(timelines_id = 'timelines', graph_id = 'graph', width = window.innerWidth, height = window.innerHeight - 80) {
+    constructor(timelines_id = 'timelines', graph_id = 'graph', width = window.innerWidth, height = window.innerHeight) {
         super();
-        const timelines_svg = d3.select('#' + timelines_id).append('svg')
-            .attr('width', '100%')
-            .attr('height', '100%')
+        this.timelines_svg = d3.select('#' + timelines_id).append('svg')
+            .attr('viewBox', '0 0 ' + width + ' ' + height);
+        this.graph_svg = d3.select('#' + graph_id).append('svg')
             .attr('viewBox', '0 0 ' + width + ' ' + height);
 
-        this.ag_lg = timelines_svg.append('defs').append('linearGradient').attr('id', 'ag-lg').attr('x1', '0%').attr('x2', '0%').attr('y1', '0%').attr('y2', '100%');
+        this.ag_lg = this.timelines_svg.append('defs').append('linearGradient').attr('id', 'ag-lg').attr('x1', '0%').attr('x2', '0%').attr('y1', '0%').attr('y2', '100%');
         this.ag_lg.append('stop').attr('offset', '0%').style('stop-color', 'navajowhite').style('stop-opacity', 1);
         this.ag_lg.append('stop').attr('offset', '20%').style('stop-color', 'ivory').style('stop-opacity', 1);
         this.ag_lg.append('stop').attr('offset', '100%').style('stop-color', 'navajowhite').style('stop-opacity', 1);
 
-        this.sv_ok_lg = timelines_svg.append('defs').append('linearGradient').attr('id', 'sv-ok-lg').attr('x1', '0%').attr('x2', '0%').attr('y1', '0%').attr('y2', '100%');
+        this.sv_ok_lg = this.timelines_svg.append('defs').append('linearGradient').attr('id', 'sv-ok-lg').attr('x1', '0%').attr('x2', '0%').attr('y1', '0%').attr('y2', '100%');
         this.sv_ok_lg.append('stop').attr('offset', '0%').style('stop-color', 'palegreen').style('stop-opacity', 1);
         this.sv_ok_lg.append('stop').attr('offset', '20%').style('stop-color', 'ivory').style('stop-opacity', 1);
         this.sv_ok_lg.append('stop').attr('offset', '100%').style('stop-color', 'palegreen').style('stop-opacity', 1);
 
-        this.sv_inc_lg = timelines_svg.append('defs').append('linearGradient').attr('id', 'sv-inc-lg').attr('x1', '0%').attr('x2', '0%').attr('y1', '0%').attr('y2', '100%');
+        this.sv_inc_lg = this.timelines_svg.append('defs').append('linearGradient').attr('id', 'sv-inc-lg').attr('x1', '0%').attr('x2', '0%').attr('y1', '0%').attr('y2', '100%');
         this.sv_inc_lg.append('stop').attr('offset', '0%').style('stop-color', 'lightsalmon').style('stop-opacity', 1);
         this.sv_inc_lg.append('stop').attr('offset', '20%').style('stop-color', 'ivory').style('stop-opacity', 1);
         this.sv_inc_lg.append('stop').attr('offset', '100%').style('stop-color', 'lightsalmon').style('stop-opacity', 1);
 
-        this.sv_none_lg = timelines_svg.append('defs').append('linearGradient').attr('id', 'sv-none-lg').attr('x1', '0%').attr('x2', '0%').attr('y1', '0%').attr('y2', '100%');
+        this.sv_none_lg = this.timelines_svg.append('defs').append('linearGradient').attr('id', 'sv-none-lg').attr('x1', '0%').attr('x2', '0%').attr('y1', '0%').attr('y2', '100%');
         this.sv_none_lg.append('stop').attr('offset', '0%').style('stop-color', 'lightgray').style('stop-opacity', 1);
         this.sv_none_lg.append('stop').attr('offset', '20%').style('stop-color', 'ivory').style('stop-opacity', 1);
         this.sv_none_lg.append('stop').attr('offset', '100%').style('stop-color', 'lightgray').style('stop-opacity', 1);
 
-        this.timelines_g = timelines_svg.append('g');
+        this.timelines_g = this.timelines_svg.append('g');
 
         this.timelines_height = height;
 
         this.timelines_x_scale = d3.scaleLinear().range([0, width]);
         this.timelines_y_scale = d3.scaleBand().rangeRound([0, this.timelines_height]).padding(0.1);
 
-        this.timelines_axis_g = timelines_svg.append('g');
+        this.timelines_axis_g = this.timelines_svg.append('g');
         this.timelines_x_axis = d3.axisBottom(this.timelines_x_scale);
         this.timelines_axis_g.call(this.timelines_x_axis);
 
@@ -54,19 +54,14 @@ export class SolverD3 extends Solver {
             }
         });
 
-        timelines_svg.call(this.timelines_zoom);
+        this.timelines_svg.call(this.timelines_zoom);
 
-        const graph_svg = d3.select('#' + graph_id).append('svg')
-            .attr('width', '100%')
-            .attr('height', '100%')
-            .attr('viewBox', '0 0 ' + width + ' ' + height);
-
-        this.graph_g = graph_svg.append('g');
+        this.graph_g = this.graph_svg.append('g');
 
         this.graph_zoom = d3.zoom().on('zoom', event => this.graph_g.attr('transform', event.transform));
-        graph_svg.call(this.graph_zoom);
+        this.graph_svg.call(this.graph_zoom);
 
-        graph_svg.append('svg:defs').append('svg:marker')
+        this.graph_svg.append('svg:defs').append('svg:marker')
             .attr('id', 'triangle')
             .attr('viewBox', '0 -5 10 10')
             .attr('refX', 8)
@@ -678,6 +673,11 @@ export class SolverD3 extends Solver {
 
         this.simulation.restart();
         this.simulation.alpha(0.3);
+    }
+
+    resize(width, height) {
+        this.timelines_svg.attr('viewBox', '0 0 ' + width + ' ' + height);
+        this.graph_svg.attr('viewBox', '0 0 ' + width + ' ' + height);
     }
 }
 

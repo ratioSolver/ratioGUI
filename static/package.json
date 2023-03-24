@@ -1,0 +1,18 @@
+{
+  "name": "oratio",
+  "version": "1.0.0",
+  "description": "oRatio GUI Library",
+  "main": "solverD3.js",
+  "files": [
+    "solver.js",
+    "solverD3.js",
+    "README.md"
+  ],
+  "author": "Riccardo De Benedictis",
+  "license": "Apache License Version 2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ratioSolver/ratioGUI"
+  },
+  "readme": "README.md"
+}

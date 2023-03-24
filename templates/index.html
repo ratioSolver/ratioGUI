@@ -41,8 +41,6 @@
                         </v-window>
                     </v-card-text>
                 </v-card>
-
-                <router-view></router-view>
             </v-main>
         </v-app>
     </div>
@@ -76,9 +74,14 @@
         app.mount('#app');
 
         const solver = new SolverD3();
+        solver.resize(window.innerWidth, window.innerHeight - 80);
 
         let ws;
         setup_ws();
+
+        window.addEventListener('resize', () => {
+            solver.resize(window.innerWidth, window.innerHeight - 80);
+        });
 
         function setup_ws() {
             ws = new WebSocket('ws://' + location.hostname + ':' + location.port + '/solver');
