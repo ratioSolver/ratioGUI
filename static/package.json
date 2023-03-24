@@ -2,6 +2,7 @@
   "name": "oratiosolver",
   "version": "1.0.0",
   "description": "oRatio GUI Library",
+  "type": "module",
   "main": "solverD3.js",
   "files": [
     "solver.js",
