@@ -1,5 +1,27 @@
 import { Solver } from "./solver.js";
 
+import { range, max, area } from 'd3'
+import { bisector } from 'd3-array'
+import { forceSimulation, forceLink, forceManyBody, forceCenter, forceX } from 'd3-force'
+import { axisBottom } from 'd3-axis'
+import { drag } from 'd3-drag'
+import { select, selectAll } from 'd3-selection'
+import { scaleOrdinal, scaleLinear, scaleBand, scaleSequential } from 'd3-scale'
+import { interpolateRdYlGn } from 'd3-scale-chromatic'
+import { zoom } from 'd3-zoom'
+
+const d3 = {
+    range, max, area,
+    bisector,
+    forceSimulation, forceLink, forceManyBody, forceCenter, forceX,
+    axisBottom,
+    drag,
+    select, selectAll,
+    scaleOrdinal, scaleLinear, scaleBand, scaleSequential,
+    interpolateRdYlGn,
+    zoom
+}
+
 const color_interpolator = d3.scaleSequential(d3.interpolateRdYlGn).domain([15, 0]);
 const bisect_value = d3.bisector(d => d.to).left;
 const font_size = 14;
