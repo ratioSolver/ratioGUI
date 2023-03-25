@@ -12,8 +12,8 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 16
-      - run: npm ci --prefix ./static
-      - run: npm test --prefix ./static
+      - run: npm ci --prefix ./static -g
+      - run: npm test --prefix ./static -g
 
   publish-npm:
     needs: build
@@ -24,7 +24,7 @@ jobs:
         with:
           node-version: 16
           registry-url: https://registry.npmjs.org/
-      - run: npm ci --prefix ./static
-      - run: npm publish --prefix ./static
+      - run: npm ci --prefix ./static -g
+      - run: npm publish --prefix ./static -g
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}
