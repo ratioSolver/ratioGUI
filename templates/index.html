@@ -45,13 +45,27 @@
         </v-app>
     </div>
 
+    <script type="importmap">
+        { "imports": {
+            "d3-array": "https://unpkg.com/d3-array",
+            "d3-axis": "https://unpkg.com/d3-axis",
+            "d3-color": "https://unpkg.com/d3-color",
+            "d3-drag": "https://unpkg.com/d3-drag",
+            "d3-force": "https://unpkg.com/d3-force",
+            "d3-interpolate": "https://unpkg.com/d3-interpolate",
+            "d3-scale": "https://unpkg.com/d3-scale",
+            "d3-scale-chromatic": "https://unpkg.com/d3-scale-chromatic",
+            "d3-shape": "https://unpkg.com/d3-shape",
+            "d3-selection": "https://unpkg.com/d3-selection",
+            "d3-zoom": "https://unpkg.com/d3-zoom",
+            "o-ratio": "https://unpkg.com/o-ratio"
+        } }
+    </script>
     <script src="https://unpkg.com/vue"></script>
-    <script src="https://unpkg.com/d3"></script>
-    <script type='module' src="https://unpkg.com/oratiosolver"></script>
     <script src='https://cdn.jsdelivr.net/npm/vuetify@3.1.10/dist/vuetify.min.js'></script>
 
     <script type='module'>
-        import { SolverD3 } from './static/solverD3.js';
+        import { Connection } from 'o-ratio';
 
         const { createApp } = Vue;
         const { createVuetify } = Vuetify;
@@ -72,84 +86,10 @@
         app.use(vuetify);
         app.mount('#app');
 
-        const solver = new SolverD3();
-        solver.resize(window.innerWidth, window.innerHeight - 80);
-
-        let ws;
-        setup_ws();
-
-        window.addEventListener('resize', () => {
-            solver.resize(window.innerWidth, window.innerHeight - 80);
-        });
-
-        function setup_ws() {
-            ws = new WebSocket('ws://' + location.hostname + ':' + location.port + '/solver');
-            ws.onmessage = msg => {
-                const c_msg = JSON.parse(msg.data);
-                switch (c_msg.type) {
-                    case 'state_changed':
-                        solver.state_changed(c_msg);
-                        break;
-                    case 'started_solving':
-                        console.log('solving the problem..');
-                        break;
-                    case 'solution_found':
-                        console.log('hurray!! we have found a solution..');
-                        solver.solution_found();
-                        break;
-                    case 'inconsistent_problem':
-                        console.log('the problem has no solution..');
-                        solver.inconsistent_problem();
-                        break;
-                    case 'graph':
-                        solver.graph(c_msg);
-                        break;
-                    case 'flaw_created':
-                        solver.flaw_created(c_msg);
-                        break;
-                    case 'flaw_state_changed':
-                        solver.flaw_state_changed(c_msg);
-                        break;
-                    case 'flaw_cost_changed':
-                        solver.flaw_cost_changed(c_msg);
-                        break;
-                    case 'flaw_position_changed':
-                        solver.flaw_position_changed(c_msg);
-                        break;
-                    case 'current_flaw':
-                        solver.current_flaw_changed(c_msg);
-                        break;
-                    case 'resolver_created':
-                        solver.resolver_created(c_msg);
-                        break;
-                    case 'resolver_state_changed':
-                        solver.resolver_state_changed(c_msg);
-                        break;
-                    case 'current_resolver':
-                        solver.current_resolver_changed(c_msg);
-                        break;
-                    case 'causal_link_added':
-                        solver.causal_link_added(c_msg);
-                        break;
-                    case 'tick':
-                        solver.tick(c_msg);
-                        break;
-                    case 'starting':
-                        solver.starting(c_msg);
-                        break;
-                    case 'ending':
-                        solver.ending(c_msg);
-                        break;
-                    case 'start':
-                        solver.start(c_msg);
-                        break;
-                    case 'end':
-                        solver.end(c_msg);
-                        break;
-                }
-            };
-            ws.onclose = () => setTimeout(setup_ws, 1000);
-        }
+        const connection = new Connection();
+        connection.add_solver();
+        connection.connect();
+        connection.resize(window.innerWidth, window.innerHeight - 80);
     </script>
 </body>
 

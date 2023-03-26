@@ -1,24 +1,24 @@
 import { Solver } from "./solver.js";
 
-import { area } from 'd3-polygon'
 import { bisector, max, range } from 'd3-array'
-import { forceSimulation, forceLink, forceManyBody, forceCenter, forceX } from 'd3-force'
 import { axisBottom } from 'd3-axis'
 import { drag } from 'd3-drag'
-import { select, selectAll } from 'd3-selection'
-import { scaleOrdinal, scaleLinear, scaleBand, scaleSequential } from 'd3-scale'
+import { forceCenter, forceLink, forceManyBody, forceSimulation, forceX } from 'd3-force'
+import { scaleBand, scaleLinear, scaleOrdinal, scaleSequential } from 'd3-scale'
 import { interpolateRdYlGn } from 'd3-scale-chromatic'
+import { select, selectAll } from 'd3-selection'
+import { area } from 'd3-shape'
 import { zoom } from 'd3-zoom'
 
 const d3 = {
-    area,
     bisector, max, range,
-    forceSimulation, forceLink, forceManyBody, forceCenter, forceX,
     axisBottom,
     drag,
-    select, selectAll,
-    scaleOrdinal, scaleLinear, scaleBand, scaleSequential,
+    forceCenter, forceLink, forceManyBody, forceSimulation, forceX,
     interpolateRdYlGn,
+    scaleBand, scaleLinear, scaleOrdinal, scaleSequential,
+    select, selectAll,
+    area,
     zoom
 }
 

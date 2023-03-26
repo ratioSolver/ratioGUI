@@ -1,25 +1,28 @@
 {
-  "name": "oratiosolver",
-  "version": "1.1.2",
+  "name": "o-ratio",
+  "version": "1.0.0",
   "description": "oRatio GUI Library",
   "type": "module",
   "main": "solverD3.js",
   "files": [
     "solver.js",
     "solverD3.js",
+    "connection.js",
     "README.md"
   ],
   "author": "Riccardo De Benedictis",
   "license": "Apache-2.0",
   "dependencies": {
-    "d3-polygon": "",
     "d3-array": "",
-    "d3-force": "",
     "d3-axis": "",
+    "d3-color": "",
     "d3-drag": "",
-    "d3-selection": "",
+    "d3-force": "",
+    "d3-interpolate": "",
     "d3-scale": "",
     "d3-scale-chromatic": "",
+    "d3-shape": "",
+    "d3-selection": "",
     "d3-zoom": ""
   },
   "repository": {
