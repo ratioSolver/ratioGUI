@@ -12,7 +12,15 @@
   "author": "Riccardo De Benedictis",
   "license": "Apache-2.0",
   "dependencies": {
-    "d3": "^7.8.3"
+    "d3-polygon": "",
+    "d3-array": "",
+    "d3-force": "",
+    "d3-axis": "",
+    "d3-drag": "",
+    "d3-selection": "",
+    "d3-scale": "",
+    "d3-scale-chromatic": "",
+    "d3-zoom": ""
   },
   "repository": {
     "type": "git",
