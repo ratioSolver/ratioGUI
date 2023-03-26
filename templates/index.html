@@ -8,6 +8,7 @@
     <title>{{title}}</title>
     <meta name='viewport' content='width=device-width, initial-scale=1'>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css">
+    <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/vuetify@3.1.11/dist/vuetify.min.css'>
 </head>
 
 <body class='h-100'>
@@ -46,19 +47,18 @@
 
     <script type="importmap">
         { "imports": {
-            "vue": "https://unpkg.com/vue",
-            "vuetify": "https://unpkg.com/vuetify",
             "d3": "https://unpkg.com/d3",
             "ratio-solver": "https://unpkg.com/ratio-solver"
         } }
     </script>
+    <script src="https://unpkg.com/vue"></script>
+    <script src='https://cdn.jsdelivr.net/npm/vuetify@3.1.11/dist/vuetify.min.js'></script>
 
     <script type='module'>
-        import { createApp } from 'vue';
-        import 'vuetify/styles';
-        import { createVuetify } from 'vuetify';
-
         import { Connection } from 'ratio-solver';
+
+        const { createApp } = Vue;
+        const { createVuetify } = Vuetify;
 
         const vuetify = createVuetify();
 
