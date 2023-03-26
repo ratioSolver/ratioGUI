@@ -13,7 +13,15 @@
   "author": "Riccardo De Benedictis",
   "license": "Apache-2.0",
   "dependencies": {
-    "d3": ""
+    "d3-array": "",
+    "d3-axis": "",
+    "d3-drag": "",
+    "d3-force": "",
+    "d3-scale": "",
+    "d3-scale-chromatic": "",
+    "d3-selection": "",
+    "d3-shape": "",
+    "d3-zoom": ""
   },
   "repository": {
     "type": "git",
@@ -24,6 +32,6 @@
   },
   "homepage": "https://github.com/ratioSolver/ratioGUI#readme",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   }
 }
