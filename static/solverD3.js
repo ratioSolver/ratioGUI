@@ -1,7 +1,7 @@
 import { Solver } from "./solver.js";
 
-import { range, max, area } from 'd3'
-import { bisector } from 'd3-array'
+import { area } from 'd3-polygon'
+import { bisector, max, range } from 'd3-array'
 import { forceSimulation, forceLink, forceManyBody, forceCenter, forceX } from 'd3-force'
 import { axisBottom } from 'd3-axis'
 import { drag } from 'd3-drag'
@@ -11,8 +11,8 @@ import { interpolateRdYlGn } from 'd3-scale-chromatic'
 import { zoom } from 'd3-zoom'
 
 const d3 = {
-    range, max, area,
-    bisector,
+    area,
+    bisector, max, range,
     forceSimulation, forceLink, forceManyBody, forceCenter, forceX,
     axisBottom,
     drag,
