@@ -8,7 +8,6 @@
     <title>{{title}}</title>
     <meta name='viewport' content='width=device-width, initial-scale=1'>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css">
-    <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/vuetify@3.1.10/dist/vuetify.min.css'>
 </head>
 
 <body class='h-100'>
@@ -47,28 +46,19 @@
 
     <script type="importmap">
         { "imports": {
-            "d3-array": "https://unpkg.com/d3-array",
-            "d3-axis": "https://unpkg.com/d3-axis",
-            "d3-color": "https://unpkg.com/d3-color",
-            "d3-drag": "https://unpkg.com/d3-drag",
-            "d3-force": "https://unpkg.com/d3-force",
-            "d3-interpolate": "https://unpkg.com/d3-interpolate",
-            "d3-scale": "https://unpkg.com/d3-scale",
-            "d3-scale-chromatic": "https://unpkg.com/d3-scale-chromatic",
-            "d3-shape": "https://unpkg.com/d3-shape",
-            "d3-selection": "https://unpkg.com/d3-selection",
-            "d3-zoom": "https://unpkg.com/d3-zoom",
+            "vue": "https://unpkg.com/vue",
+            "vuetify": "https://unpkg.com/vuetify",
+            "d3": "https://unpkg.com/d3",
             "ratio-solver": "https://unpkg.com/ratio-solver"
         } }
     </script>
-    <script src="https://unpkg.com/vue"></script>
-    <script src='https://cdn.jsdelivr.net/npm/vuetify@3.1.10/dist/vuetify.min.js'></script>
 
     <script type='module'>
-        import { Connection } from 'ratio-solver';
+        import { createApp } from 'vue';
+        import 'vuetify/styles';
+        import { createVuetify } from 'vuetify';
 
-        const { createApp } = Vue;
-        const { createVuetify } = Vuetify;
+        import { Connection } from 'ratio-solver';
 
         const vuetify = createVuetify();
 
