@@ -32,7 +32,11 @@ export class SolverD3 extends Solver {
         super(type);
     }
 
-    init(timelines_id = 'timelines', graph_id = 'graph', width = window.innerWidth, height = window.innerHeight) {
+    init(timelines_id = 'timelines', graph_id = 'graph') {
+        const main = d3.select('#' + timelines_id).node().getBoundingClientRect();
+        const width = main.width;
+        const height = main.height;
+
         this.timelines_svg = d3.select('#' + timelines_id).append('svg')
             .attr('viewBox', '0 0 ' + width + ' ' + height);
         this.graph_svg = d3.select('#' + graph_id).append('svg')
@@ -698,11 +702,6 @@ export class SolverD3 extends Solver {
 
         this.simulation.restart();
         this.simulation.alpha(0.3);
-    }
-
-    resize(width, height) {
-        this.timelines_svg.attr('viewBox', '0 0 ' + width + ' ' + height);
-        this.graph_svg.attr('viewBox', '0 0 ' + width + ' ' + height);
     }
 }
 

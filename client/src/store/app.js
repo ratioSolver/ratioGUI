@@ -1,6 +1,7 @@
 // Utilities
 import { SolverD3 } from '@/solverD3';
 import { defineStore } from 'pinia';
+import { nextTick } from 'vue';
 
 export const useAppStore = defineStore('app', {
   state: () => ({
@@ -34,6 +35,9 @@ export const useAppStore = defineStore('app', {
     },
     add_solver(solver_id, solver_type = 'default') {
       this.solvers.set(solver_id, new SolverD3(solver_type));
+      nextTick(() => {
+        this.solvers.get(solver_id).init(this.getTimelinesId(solver_id), this.getGraphId(solver_id));
+      });
     },
     remove_solver(solver_id) {
       this.solvers.delete(solver_id);
