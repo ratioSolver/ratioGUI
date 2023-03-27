@@ -21,3 +21,5 @@ registerPlugins(app);
 app.mount('#app');
 
 useAppStore().add_solver('solver1');
+useAppStore().add_solver('solver2');
+useAppStore().solvers_tab = 'solver1';
