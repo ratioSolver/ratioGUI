@@ -26,7 +26,7 @@
 
     <v-main>
       <v-window v-model='solver' direction='vertical' class='fill-height' show-arrows>
-        <v-window-item v-for='[key, value] of solvers' class='fill-height' @solver-added="solvers.get(key).init(getTimelinesId(key), getGraphId(key))">
+        <v-window-item v-for='[key, value] of solvers' class='fill-height'>
           <v-window v-model='tab' class='fill-height'>
             <v-window-item :id='getTimelinesId(key)' value='timelines' class='fill-height' />
             <v-window-item :id='getGraphId(key)' value='graph' class='fill-height' />
