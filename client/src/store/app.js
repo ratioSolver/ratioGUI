@@ -32,11 +32,19 @@ export const useAppStore = defineStore('app', {
     tick() {
       console.log('tick');
     },
-    add_solver(solver_id) {
-      this.solvers.set(solver_id, new SolverD3());
+    add_solver(solver_id, solver_type = 'default') {
+      this.solvers.set(solver_id, new SolverD3(solver_type));
     },
     remove_solver(solver_id) {
       this.solvers.delete(solver_id);
+    }
+  },
+  getters: {
+    getTimelinesId: (state) => {
+      return (solverId) => solverId + '-timelines'
+    },
+    getGraphId: (state) => {
+      return (solverId) => solverId + '-graph'
     }
   }
 });
