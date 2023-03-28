@@ -6,8 +6,8 @@ import { drag } from 'd3-drag';
 import { forceCenter, forceLink, forceManyBody, forceSimulation, forceX } from 'd3-force';
 import { scaleBand, scaleLinear, scaleOrdinal, scaleSequential } from 'd3-scale';
 import { interpolateRdYlGn } from 'd3-scale-chromatic';
-import { select, selectAll } from 'd3-selection';
-import { area } from 'd3-shape';
+import { select, selectAll, pointer } from 'd3-selection';
+import { area, curveStepAfter } from 'd3-shape';
 import { zoom } from 'd3-zoom';
 
 const d3 = {
@@ -17,8 +17,8 @@ const d3 = {
     forceCenter, forceLink, forceManyBody, forceSimulation, forceX,
     interpolateRdYlGn,
     scaleBand, scaleLinear, scaleOrdinal, scaleSequential,
-    select, selectAll,
-    area,
+    select, selectAll, pointer,
+    area, curveStepAfter,
     zoom
 }
 
@@ -28,8 +28,8 @@ const font_size = 14;
 
 export class SolverD3 extends Solver {
 
-    constructor(type = 'default') {
-        super(type);
+    constructor(name = 'default') {
+        super(name);
     }
 
     init(timelines_id = 'timelines', graph_id = 'graph') {

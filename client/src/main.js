@@ -20,6 +20,4 @@ registerPlugins(app);
 
 app.mount('#app');
 
-useAppStore().add_solver('solver1');
-useAppStore().add_solver('solver2');
-useAppStore().solvers_tab = 'solver1';
+useAppStore().connect('ws://' + location.hostname + ':' + 8080 + '/solver');

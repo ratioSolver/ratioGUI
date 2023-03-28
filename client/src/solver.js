@@ -1,7 +1,7 @@
 export class Solver {
 
-    constructor(type = 'default') {
-        this.type = type;
+    constructor(name = 'default') {
+        this.name = name;
 
         this.items = new Map();
         this.atoms = new Map();

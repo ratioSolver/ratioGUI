@@ -3,7 +3,7 @@
     <v-navigation-drawer v-model='drawer'>
       <v-tabs v-model='solver' direction='vertical' color='deep-purple-accent-4'>
         <v-tab v-for='[key, value] in solvers'>
-          <v-icon>mdi-brain</v-icon>{{ value.type }}
+          <v-icon>mdi-brain</v-icon>{{ value.name }}
         </v-tab>
       </v-tabs>
     </v-navigation-drawer>
@@ -19,6 +19,7 @@
 
       <v-spacer></v-spacer>
 
+      <v-icon v-if='!connected' color='red'>mdi-wifi-off</v-icon>
       <v-btn icon @click='useAppStore().tick()'>
         <v-icon>mdi-metronome-tick</v-icon>
       </v-btn>
