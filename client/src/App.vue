@@ -3,7 +3,14 @@
     <v-navigation-drawer v-model='drawer'>
       <v-tabs v-model='solver' direction='vertical' color='deep-purple-accent-4'>
         <v-tab v-for='[key, value] in solvers'>
-          <v-icon>mdi-brain</v-icon>{{ value.name }}
+          <v-col>
+            <v-icon>mdi-brain</v-icon>{{ value.name }}
+          </v-col>
+          <v-col class='text-right'>
+            <v-progress-circular v-if="reasoning.has(key)" :size="20" indeterminate color="primary"></v-progress-circular>
+            <v-icon v-if="solved.has(key)" icon="mdi-check-circle"></v-icon>
+            <v-icon v-if="inconsistent.has(key)" icon="mdi-alert-circle"></v-icon>
+          </v-col>
         </v-tab>
       </v-tabs>
     </v-navigation-drawer>
@@ -52,5 +59,5 @@ export default {
 import { useAppStore } from '@/store/app';
 import { storeToRefs } from 'pinia';
 
-const { connected, solvers, getTimelinesId, getGraphId } = storeToRefs(useAppStore());
+const { connected, solvers, reasoning, solved, inconsistent, getTimelinesId, getGraphId } = storeToRefs(useAppStore());
 </script>
