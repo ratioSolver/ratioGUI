@@ -6,10 +6,7 @@ import { nextTick } from 'vue';
 export const useAppStore = defineStore('app', {
   state: () => ({
     connected: false,
-    solvers: new Map(),
-    reasoning: new Set(),
-    solved: new Set(),
-    inconsistent: new Set()
+    solvers: new Map()
   }),
   actions: {
     connect(url = 'ws://' + location.hostname + ':' + location.port + '/solver', timeout = 1000) {
@@ -21,15 +18,12 @@ export const useAppStore = defineStore('app', {
         const data = JSON.parse(event.data);
         switch (data.type) {
           case 'solvers':
-            data.solvers.forEach((solver) => this.add_solver(solver.id, solver.name));
+            data.solvers.forEach((solver) => this.add_solver(solver.id, solver.name, solver.state));
             break;
           case 'solver_created':
             this.add_solver(data.solver_id, data.name);
             break;
           case 'solver_destroyed':
-            this.reasoning.delete(data.solver_id);
-            this.solved.delete(data.solver_id);
-            this.inconsistent.delete(data.solver_id);
             this.remove_solver(data.solver_id);
             break;
           case 'state_changed':
@@ -39,13 +33,9 @@ export const useAppStore = defineStore('app', {
             this.reasoning.add(data.solver_id);
             break;
           case 'solution_found':
-            this.reasoning.delete(data.solver_id);
-            this.solved.add(data.solver_id);
             this.solvers.get(data.solver_id).solution_found(data);
             break;
           case 'inconsistent_problem':
-            this.reasoning.delete(data.solver_id);
-            this.inconsistent.add(data.solver_id);
             this.solvers.get(data.solver_id).inconsistent_problem(data);
             break;
           case 'graph':
@@ -78,6 +68,9 @@ export const useAppStore = defineStore('app', {
           case 'causal_link_added':
             this.solvers.get(data.solver_id).causal_link_added(data);
             break;
+          case 'executor_state_changed':
+            this.solvers.get(data.solver_id).executor_state_changed(data);
+            break;
           case 'tick':
             this.solvers.get(data.solver_id).tick(data);
             break;
@@ -103,8 +96,8 @@ export const useAppStore = defineStore('app', {
     tick() {
       this.socket.send('tick');
     },
-    add_solver(id, name = 'default') {
-      this.solvers.set(id, new SolverD3(name));
+    add_solver(id, name, state) {
+      this.solvers.set(id, new SolverD3(name, state));
       nextTick(() => {
         this.solvers.get(id).init(this.getTimelinesId(id), this.getGraphId(id));
       });

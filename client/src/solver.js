@@ -1,7 +1,8 @@
 export class Solver {
 
-    constructor(name = 'default') {
+    constructor(name, state) {
         this.name = name;
+        this.state = state;
 
         this.items = new Map();
         this.atoms = new Map();
@@ -54,6 +55,10 @@ export class Solver {
     inconsistent_problem() {
         this.current_flaw = undefined;
         this.current_resolver = undefined;
+    }
+
+    executor_state_changed(message) {
+        this.state = message.state;
     }
 
     tick(message) {

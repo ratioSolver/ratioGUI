@@ -49,6 +49,7 @@ namespace ratio::gui
     void causal_link_added(const ratio::flaw &f, const ratio::resolver &r) override;
 
   private:
+    void executor_state_changed(ratio::executor::executor_state state) override;
     void tick(const utils::rational &time) override;
     void starting(const std::unordered_set<ratio::atom *> &atoms) override;
     void start(const std::unordered_set<ratio::atom *> &atoms) override;

@@ -28,8 +28,8 @@ const font_size = 14;
 
 export class SolverD3 extends Solver {
 
-    constructor(name = 'default') {
-        super(name);
+    constructor(name, state) {
+        super(name, state);
     }
 
     init(timelines_id = 'timelines', graph_id = 'graph') {

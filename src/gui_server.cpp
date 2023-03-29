@@ -23,7 +23,8 @@ namespace ratio::gui
                 json::json j_ss{{"type", "solvers"}};
                 json::json j_slvs(json::json_type::array);
                 j_slvs.push_back({{"id", get_id(exec.get_solver())},
-                                  {"name", "default"}});
+                                  {"name", exec.get_name()},
+                                  {"state", ratio::executor::to_string(exec.get_state())}});
                 j_ss["solvers"] = std::move(j_slvs);
                 conn.send_text(j_ss.to_string());
 
@@ -174,31 +175,38 @@ namespace ratio::gui
         broadcast(causal_link_added_message(f, r).to_string());
     }
 
+    void gui_server::executor_state_changed([[maybe_unused]] ratio::executor::executor_state state)
+    {
+        LOG_DEBUG("gui_server::executor_state_changed" << ratio::executor::to_string(state));
+        std::lock_guard<std::mutex> _(mtx);
+        broadcast(ratio::executor::state_changed_message(exec).to_string());
+    }
+
     void gui_server::tick(const utils::rational &time)
     {
         std::lock_guard<std::mutex> _(mtx);
         current_time = time;
 
-        broadcast(ratio::executor::tick_message(exec.get_solver(), time).to_string());
+        broadcast(ratio::executor::tick_message(exec, time).to_string());
     }
     void gui_server::starting(const std::unordered_set<ratio::atom *> &atoms)
     {
         std::lock_guard<std::mutex> _(mtx);
 
-        broadcast(ratio::executor::starting_message(exec.get_solver(), atoms).to_string());
+        broadcast(ratio::executor::starting_message(exec, atoms).to_string());
     }
     void gui_server::start(const std::unordered_set<ratio::atom *> &atoms)
     {
         std::lock_guard<std::mutex> _(mtx);
         executing.insert(atoms.cbegin(), atoms.cend());
 
-        broadcast(ratio::executor::start_message(exec.get_solver(), atoms).to_string());
+        broadcast(ratio::executor::start_message(exec, atoms).to_string());
     }
     void gui_server::ending(const std::unordered_set<ratio::atom *> &atoms)
     {
         std::lock_guard<std::mutex> _(mtx);
 
-        broadcast(ratio::executor::ending_message(exec.get_solver(), atoms).to_string());
+        broadcast(ratio::executor::ending_message(exec, atoms).to_string());
     }
     void gui_server::end(const std::unordered_set<ratio::atom *> &atoms)
     {
@@ -206,7 +214,7 @@ namespace ratio::gui
         for (const auto &a : atoms)
             executing.erase(a);
 
-        broadcast(ratio::executor::end_message(exec.get_solver(), atoms).to_string());
+        broadcast(ratio::executor::end_message(exec, atoms).to_string());
     }
 
     void gui_server::broadcast(const std::string &msg)
