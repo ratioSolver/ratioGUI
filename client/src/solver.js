@@ -1,6 +1,7 @@
 export class Solver {
 
-    constructor(name, state) {
+    constructor(id, name, state) {
+        this.id = id;
         this.name = name;
         this.state = state;
 

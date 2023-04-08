@@ -97,7 +97,7 @@ export const useAppStore = defineStore('app', {
       this.socket.send('tick');
     },
     add_solver(id, name, state) {
-      this.solvers.set(id, new SolverD3(name, state));
+      this.solvers.set(id, new SolverD3(id, name, state));
       nextTick(() => {
         this.solvers.get(id).init(this.getTimelinesId(id), this.getGraphId(id));
       });
