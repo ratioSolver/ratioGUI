@@ -99,7 +99,8 @@ export const useAppStore = defineStore('app', {
     add_solver(id, name, state) {
       this.solvers.set(id, new SolverD3(id, name, state));
       nextTick(() => {
-        this.solvers.get(id).init(this.getTimelinesId(id), this.getGraphId(id));
+        const rect = document.getElementById(this.getTimelinesId(id)).getBoundingClientRect();
+        this.solvers.get(id).init(this.getTimelinesId(id), this.getGraphId(id), rect.width, rect.height);
       });
     },
     remove_solver(solver_id) {

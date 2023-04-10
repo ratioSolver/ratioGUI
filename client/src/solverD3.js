@@ -32,14 +32,8 @@ export class SolverD3 extends Solver {
         super(id, name, state);
     }
 
-    init(timelines_id = 'timelines', graph_id = 'graph') {
-        const main = d3.select('#' + timelines_id).node().getBoundingClientRect();
-        const width = main.width;
-        const height = main.height;
-
+    init(timelines_id = 'timelines', graph_id = 'graph', width, height) {
         this.timelines_svg = d3.select('#' + timelines_id).append('svg')
-            .attr('viewBox', '0 0 ' + width + ' ' + height);
-        this.graph_svg = d3.select('#' + graph_id).append('svg')
             .attr('viewBox', '0 0 ' + width + ' ' + height);
 
         this.ag_lg = this.timelines_svg.append('defs').append('linearGradient').attr('id', 'ag-lg').attr('x1', '0%').attr('x2', '0%').attr('y1', '0%').attr('y2', '100%');
@@ -84,6 +78,9 @@ export class SolverD3 extends Solver {
         });
 
         this.timelines_svg.call(this.timelines_zoom);
+
+        this.graph_svg = d3.select('#' + graph_id).append('svg')
+            .attr('viewBox', '0 0 ' + width + ' ' + height);
 
         this.graph_g = this.graph_svg.append('g');
 
