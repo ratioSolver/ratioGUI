@@ -177,7 +177,7 @@ namespace ratio::gui
 
     void gui_server::executor_state_changed([[maybe_unused]] ratio::executor::executor_state state)
     {
-        LOG_DEBUG("gui_server::executor_state_changed" << ratio::executor::to_string(state));
+        LOG_DEBUG("gui_server::executor_state_changed " << ratio::executor::to_string(state));
         std::lock_guard<std::mutex> _(mtx);
         broadcast(ratio::executor::state_changed_message(exec).to_string());
     }
