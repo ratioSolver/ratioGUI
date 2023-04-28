@@ -444,7 +444,7 @@ export class SolverD3 extends Solver {
                     enter => {
                         const tl_val_g = enter.append('path')
                             .attr('fill', 'aliceblue')
-                            .attr('stroke', 'lightblue')
+                            .attr('stroke', 'darkblue')
                             .attr('d', d3.area().curve(d3.curveStepAfter)
                                 .x(d => this.timelines_x_scale(d.from))
                                 .y0(this.timelines_y_scale(i) + this.timelines_y_scale.bandwidth())
@@ -509,7 +509,7 @@ export class SolverD3 extends Solver {
                     enter => {
                         const tl_val_g = enter.append('path')
                             .attr('fill', 'aliceblue')
-                            .attr('stroke', 'lightblue')
+                            .attr('stroke', 'darkblue')
                             .attr('d', d3.area().curve(d3.curveLinear)
                                 .x(d => this.timelines_x_scale(d.from))
                                 .y0(cr_y_scale(0))
