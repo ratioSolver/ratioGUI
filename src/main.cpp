@@ -1,4 +1,6 @@
 #include "gui_server.h"
+#include <thread>
+#include <fstream>
 
 #define LOCALHOST_ADDRESS "127.0.0.1"
 
@@ -35,10 +37,43 @@ int main(int argc, char const *argv[])
     ratio::solver s;
     ratio::executor::executor exec(s);
 
-    ratio::gui::gui_server server(exec, LOCALHOST_ADDRESS, 8080);
+    ratio::gui::gui_server srv(exec, LOCALHOST_ADDRESS, 8080);
 
-    auto srv_st = std::async(std::launch::async, [&server]()
-                             { server.network::server::start(); });
+    auto srv_st = std::async(std::launch::async, [&srv]()
+                             { srv.network::server::start(); });
+
+#ifndef NDEBUG
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+#endif
+
+    try
+    {
+        std::cout << "parsing input files..\n";
+        s.read(prob_names);
+
+        std::cout << "solving the problem..\n";
+        if (s.solve())
+            std::cout << "hurray!! we have found a solution..\n";
+        else
+        {
+            std::cout << "the problem is unsolvable..\n";
+            srv.stop();
+            return 1;
+        }
+
+        std::ofstream sol_file;
+        sol_file.open(sol_name);
+        sol_file << to_json(s).to_string();
+        sol_file.close();
+
+        exec.start_execution();
+    }
+    catch (const std::exception &ex)
+    {
+        std::cout << ex.what() << '\n';
+        srv.stop();
+        return 1;
+    }
 
     return 0;
 }
