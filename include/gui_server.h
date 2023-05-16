@@ -4,10 +4,10 @@
 
 namespace ratio::gui
 {
-  class gui_server
+  class gui_server : public network::server
   {
   public:
-    gui_server();
+    gui_server(const std::string &address = "0.0.0.0", unsigned short port = 8080);
 
   private:
   };
