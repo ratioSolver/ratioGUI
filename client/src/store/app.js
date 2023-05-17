@@ -6,7 +6,8 @@ import { nextTick } from 'vue';
 export const useAppStore = defineStore('app', {
   state: () => ({
     connected: false,
-    solvers: new Map()
+    solvers: new Map(),
+    current_solver: null,
   }),
   actions: {
     connect(url = 'ws://' + location.hostname + ':' + location.port + '/solver', timeout = 1000) {
@@ -21,15 +22,19 @@ export const useAppStore = defineStore('app', {
             this.solvers.clear();
             for (let solver of data.solvers)
               this.solvers.set(solver.id, new SolverD3(solver.id, solver.name, solver.state));
+            if (data.solvers.length > 0)
+              this.current_solver = data.solvers[0].id;
             nextTick(() => {
               for (let [id, slv] of this.solvers)
-                slv.init(this.get_timelines_id(id), this.get_graph_id(id), 1000, 400);
+                slv.init(this.get_timelines_id(id), this.get_graph_id(id), 1000, 450);
             });
             break;
           case 'solver_created':
             const slv = new SolverD3(data.solver, data.name, data.state);
             this.solvers.set(data.solver, slv);
-            nextTick(() => { slv.init(this.get_timelines_id(slv.id), this.get_graph_id(slv.id), 1000, 400); });
+            if (!this.current_solver)
+              this.current_solver = data.solver;
+            nextTick(() => { slv.init(this.get_timelines_id(slv.id), this.get_graph_id(slv.id), 1000, 450); });
             break;
           case 'solver_destroyed':
             this.solvers.delete(data.solver);
@@ -103,11 +108,20 @@ export const useAppStore = defineStore('app', {
     }
   },
   getters: {
-    get_timelines_id: (state) => {
-      return (solverId) => 'tls-' + solverId;
-    },
-    get_graph_id: (state) => {
-      return (solverId) => 'gr-' + solverId;
+    get_timelines_id: (state) => { return (solver_id) => 'tls-' + solver_id; },
+    get_graph_id: (state) => { return (solver_id) => 'gr-' + solver_id; },
+    solver_state_icon: (state) => {
+      return (type) => {
+        switch (type) {
+          case 'reasoning':
+          case 'adapting': return 'mdi-brain';
+          case 'idle': return 'mdi-pause-circle';
+          case 'executing': return 'mdi-play-circle';
+          case 'finished': return 'mdi-check-circle';
+          case 'failed': return 'mdi-alert-circle';
+          default: return null;
+        }
+      };
     }
   }
 });

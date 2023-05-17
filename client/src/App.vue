@@ -25,7 +25,7 @@
 
     <v-main>
       <v-window id='main-window' v-model='current_solver' direction='vertical' class='fill-height' show-arrows>
-        <Solver v-for="[id, solver] in solvers" :key="id" :solver="solver" />
+        <Solver v-for="[id, solver] in solvers" :key="id" :solver="solver" :show_tabs="false" :tab="tab" />
       </v-window>
     </v-main>
   </v-app>
@@ -35,8 +35,7 @@
 export default {
   data: () => ({
     tab: 'timelines',
-    drawer: false,
-    current_solver: null
+    drawer: false
   })
 }
 </script>
@@ -47,5 +46,5 @@ import { storeToRefs } from 'pinia';
 import SolverListItem from '@/components/SolverListItem.vue';
 import Solver from '@/components/Solver.vue';
 
-const { connected, solvers, get_timelines_id, get_graph_id } = storeToRefs(useAppStore());
+const { connected, solvers, current_solver } = storeToRefs(useAppStore());
 </script>

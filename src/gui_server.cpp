@@ -49,8 +49,7 @@ namespace ratio::gui
                 std::lock_guard<std::mutex> _(mtx);
                 sessions.erase(&session); })
             .on_message([this](network::websocket_session &, const std::string &message)
-                        { 
-                std::lock_guard<std::mutex> _(mtx);
+                        {
                 if (message == "tick")
                     exec.tick(); });
     }
