@@ -1,23 +1,9 @@
 <template>
   <v-app>
     <v-navigation-drawer v-model='drawer'>
-      <v-tabs v-model='solver' direction='vertical' color='deep-purple-accent-4'>
-        <v-tab v-for='[key, value] in solvers'>
-          <v-col class='text-left'>
-            <v-icon>mdi-brain</v-icon>{{ value.name }}
-          </v-col>
-          <v-col class='text-right'>
-            <v-progress-circular v-if="solvers.get(key).state == 'reasoning'" :size="20" indeterminate
-              color="primary"></v-progress-circular>
-            <v-progress-circular v-if="solvers.get(key).state == 'adapting'" :size="20" indeterminate
-              color="primary"></v-progress-circular>
-            <v-icon v-if="solvers.get(key).state == 'idle'">mdi-pause-circle</v-icon>
-            <v-icon v-if="solvers.get(key).state == 'failed'">mdi-alert-circle</v-icon>
-            <v-icon v-if="solvers.get(key).state == 'executing'">mdi-play-circle</v-icon>
-            <v-icon v-if="solvers.get(key).state == 'finished'">mdi-check-circle</v-icon>
-          </v-col>
-        </v-tab>
-      </v-tabs>
+      <v-list dense v-model:selected="current_solver">
+        <SolverListItem v-for="[id, solver] in solvers" :key="id" :solver="solver" />
+      </v-list>
     </v-navigation-drawer>
 
     <v-app-bar>
@@ -38,13 +24,8 @@
     </v-app-bar>
 
     <v-main>
-      <v-window id='main-window' v-model='solver' direction='vertical' class='fill-height' show-arrows>
-        <v-window-item v-for='[key, value] of solvers' class='fill-height' :eager='true'>
-          <v-window v-model='tab' class='fill-height'>
-            <v-window-item :id='getTimelinesId(key)' value='timelines' class='fill-height' :eager='true' />
-            <v-window-item :id='getGraphId(key)' value='graph' class='fill-height' :eager='true' />
-          </v-window>
-        </v-window-item>
+      <v-window id='main-window' v-model='current_solver' direction='vertical' class='fill-height' show-arrows>
+        <Solver v-for="[id, solver] in solvers" :key="id" :solver="solver" :show_tabs="false" :tab="tab" />
       </v-window>
     </v-main>
   </v-app>
@@ -54,8 +35,7 @@
 export default {
   data: () => ({
     tab: 'timelines',
-    drawer: false,
-    solver: 0
+    drawer: false
   })
 }
 </script>
@@ -63,6 +43,8 @@ export default {
 <script setup>
 import { useAppStore } from '@/store/app';
 import { storeToRefs } from 'pinia';
+import SolverListItem from '@/components/SolverListItem.vue';
+import Solver from '@/components/Solver.vue';
 
-const { connected, solvers, reasoning, idle, inconsistent, getTimelinesId, getGraphId } = storeToRefs(useAppStore());
+const { connected, solvers, current_solver } = storeToRefs(useAppStore());
 </script>

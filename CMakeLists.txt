@@ -18,15 +18,17 @@ include(CTest)
 enable_testing()
 
 set(COMPUTE_NAMES ON CACHE BOOL "Computes the objects' names" FORCE)
+set(RATIONET_INCLUDE_UTILS OFF CACHE BOOL "Include utils library" FORCE)
 
 add_subdirectory(extern/plexa)
+add_subdirectory(extern/rationet)
 
 file(GLOB RATIO_GUI_SOURCES src/*.cpp)
 file(GLOB RATIO_GUI_HEADERS include/*.h)
 
 add_executable(${PROJECT_NAME} ${RATIO_GUI_SOURCES})
-target_include_directories(${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>/include $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>/extern/crow $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}> $<INSTALL_INTERFACE:> ${Boost_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} PRIVATE PlExA ${CMAKE_THREAD_LIBS_INIT})
+target_include_directories(${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>/include $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}> $<INSTALL_INTERFACE:> ${Boost_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME} PRIVATE PlExA ratioNet ${CMAKE_THREAD_LIBS_INIT})
 
 if(MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE /W4)

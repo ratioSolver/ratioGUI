@@ -1,4 +1,6 @@
 #include "gui_server.h"
+#include <thread>
+#include <fstream>
 
 #define LOCALHOST_ADDRESS "127.0.0.1"
 
@@ -34,11 +36,11 @@ int main(int argc, char const *argv[])
 
     ratio::solver s;
     ratio::executor::executor exec(s);
-    ratio::gui::gui_server srv(exec, LOCALHOST_ADDRESS);
 
-    auto srv_st = std::async(std::launch::async, [&]
-                             { srv.start(); });
-    srv.wait_for_server_start();
+    ratio::gui::gui_server srv(exec, LOCALHOST_ADDRESS, 8080);
+
+    auto srv_st = std::async(std::launch::async, [&srv]()
+                             { srv.network::server::start(); });
 
 #ifndef NDEBUG
     std::this_thread::sleep_for(std::chrono::milliseconds(100));

@@ -6,7 +6,8 @@ import { nextTick } from 'vue';
 export const useAppStore = defineStore('app', {
   state: () => ({
     connected: false,
-    solvers: new Map()
+    solvers: new Map(),
+    current_solver: null,
   }),
   actions: {
     connect(url = 'ws://' + location.hostname + ':' + location.port + '/solver', timeout = 1000) {
@@ -18,19 +19,28 @@ export const useAppStore = defineStore('app', {
         const data = JSON.parse(event.data);
         switch (data.type) {
           case 'solvers':
-            data.solvers.forEach((solver) => this.add_solver(solver.id, solver.name, solver.state));
+            this.solvers.clear();
+            for (let solver of data.solvers)
+              this.solvers.set(solver.id, new SolverD3(solver.id, solver.name, solver.state));
+            if (data.solvers.length > 0)
+              this.current_solver = data.solvers[0].id;
+            nextTick(() => {
+              for (let [id, slv] of this.solvers)
+                slv.init(this.get_timelines_id(id), this.get_graph_id(id), 1000, 450);
+            });
             break;
           case 'solver_created':
-            this.add_solver(data.solver_id, data.name);
+            const slv = new SolverD3(data.solver, data.name, data.state);
+            this.solvers.set(data.solver, slv);
+            if (!this.current_solver)
+              this.current_solver = data.solver;
+            nextTick(() => { slv.init(this.get_timelines_id(slv.id), this.get_graph_id(slv.id), 1000, 450); });
             break;
           case 'solver_destroyed':
-            this.remove_solver(data.solver_id);
+            this.solvers.delete(data.solver);
             break;
           case 'state_changed':
             this.solvers.get(data.solver_id).state_changed(data);
-            break;
-          case 'started_solving':
-            this.reasoning.add(data.solver_id);
             break;
           case 'solution_found':
             this.solvers.get(data.solver_id).solution_found(data);
@@ -95,24 +105,23 @@ export const useAppStore = defineStore('app', {
     },
     tick() {
       this.socket.send('tick');
-    },
-    add_solver(id, name, state) {
-      this.solvers.set(id, new SolverD3(id, name, state));
-      nextTick(() => {
-        const rect = document.getElementById(this.getTimelinesId(id)).getBoundingClientRect();
-        this.solvers.get(id).init(this.getTimelinesId(id), this.getGraphId(id), rect.width, rect.height);
-      });
-    },
-    remove_solver(solver_id) {
-      this.solvers.delete(solver_id);
     }
   },
   getters: {
-    getTimelinesId: (state) => {
-      return (solverId) => 'tls-' + solverId;
-    },
-    getGraphId: (state) => {
-      return (solverId) => 'gr-' + solverId;
+    get_timelines_id: (state) => { return (solver_id) => 'tls-' + solver_id; },
+    get_graph_id: (state) => { return (solver_id) => 'gr-' + solver_id; },
+    solver_state_icon: (state) => {
+      return (type) => {
+        switch (type) {
+          case 'reasoning':
+          case 'adapting': return 'mdi-brain';
+          case 'idle': return 'mdi-pause-circle';
+          case 'executing': return 'mdi-play-circle';
+          case 'finished': return 'mdi-check-circle';
+          case 'failed': return 'mdi-alert-circle';
+          default: return null;
+        }
+      };
     }
   }
 });
