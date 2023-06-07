@@ -179,7 +179,7 @@ namespace ratio::gui
     {
         LOG_DEBUG("gui_server::executor_state_changed " << ratio::executor::to_string(state));
         std::lock_guard<std::mutex> _(mtx);
-        broadcast(ratio::executor::state_changed_message(exec).to_string());
+        broadcast(executor_state_changed_message(exec).to_string());
     }
 
     void gui_server::tick(const utils::rational &time)
