@@ -7,51 +7,57 @@ namespace ratio::gui
         add_file_route("^/$", "client/dist/index.html");
         add_file_route("^/favicon.ico$", "client/dist");
         add_file_route("^/assets/.*$", "client/dist");
-        add_ws_route("^/solver$")
-            .on_open([this](network::websocket_session &session)
-                     {
-                std::lock_guard<std::mutex> _(mtx);
-                sessions.insert(&session);
-                
-                json::json j_ss{{"type", "solvers"}};
-                json::json j_slvs(json::json_type::array);
-                j_slvs.push_back({{"id", get_id(exec.get_solver())},
-                                  {"name", exec.get_name()},
-                                  {"state", ratio::executor::to_string(exec.get_state())}});
-                j_ss["solvers"] = std::move(j_slvs);
-                session.send(j_ss.to_string());
-                
-                json::json j_sc = state_changed_message(exec.get_solver());
-                j_sc["time"] = to_json(current_time);
-                json::json j_executing(json::json_type::array);
-                for (const auto &atm : executing)
-                    j_executing.push_back(get_id(*atm));
-                j_sc["executing"] = std::move(j_executing);
-                session.send(j_sc.to_string());
+        add_ws_route("^/solver$").on_open(std::bind(&gui_server::on_ws_open, this, std::placeholders::_1)).on_message(std::bind(&gui_server::on_ws_message, this, std::placeholders::_1, std::placeholders::_2)).on_close(std::bind(&gui_server::on_ws_close, this, std::placeholders::_1));
+    }
 
-                json::json j_gr{{"type", "graph"},
-                                {"solver_id", get_id(exec.get_solver())},};
-                json::json j_flaws(json::json_type::array);
-                for (const auto &f : flaws)
-                    j_flaws.push_back(to_json(*f));
-                j_gr["flaws"] = std::move(j_flaws);
-                if (c_flaw)
-                    j_gr["current_flaw"] = get_id(*c_flaw);
-                json::json j_resolvers(json::json_type::array);
-                for (const auto &r : resolvers)
-                    j_resolvers.push_back(to_json(*r));
-                j_gr["resolvers"] = std::move(j_resolvers);
-                if (c_resolver)
-                    j_gr["current_resolver"] = get_id(*c_resolver);
-                session.send(j_gr.to_string()); })
-            .on_close([this](network::websocket_session &session)
-                      { 
-                std::lock_guard<std::mutex> _(mtx);
-                sessions.erase(&session); })
-            .on_message([this](network::websocket_session &, const std::string &message)
-                        {
-                if (message == "tick")
-                    exec.tick(); });
+    void gui_server::on_ws_open(network::websocket_session &ws)
+    {
+        std::lock_guard<std::mutex> _(mtx);
+        sessions.insert(&ws);
+
+        json::json j_ss{{"type", "solvers"}};
+        json::json j_slvs(json::json_type::array);
+        j_slvs.push_back({{"id", get_id(exec.get_solver())},
+                          {"name", exec.get_name()},
+                          {"state", ratio::executor::to_string(exec.get_state())}});
+        j_ss["solvers"] = std::move(j_slvs);
+        ws.send(j_ss.to_string());
+
+        json::json j_sc = solver_state_changed_message(exec.get_solver());
+        j_sc["time"] = to_json(current_time);
+        json::json j_executing(json::json_type::array);
+        for (const auto &atm : executing)
+            j_executing.push_back(get_id(*atm));
+        j_sc["executing"] = std::move(j_executing);
+        ws.send(j_sc.to_string());
+
+        json::json j_gr{
+            {"type", "graph"},
+            {"solver_id", get_id(exec.get_solver())},
+        };
+        json::json j_flaws(json::json_type::array);
+        for (const auto &f : flaws)
+            j_flaws.push_back(to_json(*f));
+        j_gr["flaws"] = std::move(j_flaws);
+        if (c_flaw)
+            j_gr["current_flaw"] = get_id(*c_flaw);
+        json::json j_resolvers(json::json_type::array);
+        for (const auto &r : resolvers)
+            j_resolvers.push_back(to_json(*r));
+        j_gr["resolvers"] = std::move(j_resolvers);
+        if (c_resolver)
+            j_gr["current_resolver"] = get_id(*c_resolver);
+        ws.send(j_gr.to_string());
+    }
+    void gui_server::on_ws_message(network::websocket_session &, const std::string &msg)
+    {
+        if (msg == "tick")
+            exec.tick();
+    }
+    void gui_server::on_ws_close(network::websocket_session &ws)
+    {
+        std::lock_guard<std::mutex> _(mtx);
+        sessions.erase(&ws);
     }
 
     void gui_server::log(const std::string &msg)
@@ -65,7 +71,7 @@ namespace ratio::gui
     {
         std::lock_guard<std::mutex> _(mtx);
 
-        json::json j_sc = state_changed_message(exec.get_solver());
+        json::json j_sc = solver_state_changed_message(exec.get_solver());
         j_sc["time"] = to_json(current_time);
         json::json j_executing(json::json_type::array);
         for (const auto &atm : executing)

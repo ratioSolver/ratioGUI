@@ -13,6 +13,11 @@ namespace ratio::gui
     gui_server(ratio::executor::executor &exec, const std::string &address = "0.0.0.0", unsigned short port = 8080);
 
   private:
+    void on_ws_open(network::websocket_session &ws);
+    void on_ws_message(network::websocket_session &ws, const std::string &msg);
+    void on_ws_close(network::websocket_session &ws);
+
+  private:
     void log(const std::string &msg) override;
 
     void state_changed() override;
