@@ -353,11 +353,10 @@ export class Solver {
     }
 
     flaw_label(flaw) {
+        console.log(flaw);
         switch (flaw.data.type) {
-            case 'fact':
-                return 'fact \u03C3' + flaw.data.atom.sigma + ' ' + flaw.data.atom.type;
-            case 'goal':
-                return 'goal \u03C3' + flaw.data.atom.sigma + ' ' + flaw.data.atom.type;
+            case 'atom':
+                return (flaw.data.atom.is_fact ? 'fact' : 'goal') + ' \u03C3' + flaw.data.atom.sigma + ' ' + flaw.data.atom.type;
             case 'enum':
                 return 'enum';
             case 'bool':
