@@ -300,7 +300,7 @@ export class Solver {
         return itm.type + '(' + pars.join(',') + '<br>)';
     }
 
-    atom_title(atm) { return atm.type.split(":").pop() + '(' + Array.from(atm.exprs.keys()).filter(par => par != 'start' && par != 'end' && par != 'duration' && par != 'tau').map(par => this.val_to_string(atm.exprs.get(par))).join(', ') + ')'; }
+    atom_title(atm) { return atm.type.split(":").pop() + '(' + Array.from(atm.exprs.keys()).filter(par => par != 'start' && par != 'end' && par != 'duration' && par != 'tau' && par != 'this').map(par => this.val_to_string(atm.exprs.get(par))).join(', ') + ')'; }
 
     atom_content(atm) {
         const pars = [];
@@ -353,7 +353,6 @@ export class Solver {
     }
 
     flaw_label(flaw) {
-        console.log(flaw);
         switch (flaw.data.type) {
             case 'atom':
                 return (flaw.data.atom.is_fact ? 'fact' : 'goal') + ' \u03C3' + flaw.data.atom.sigma + ' ' + flaw.data.atom.type;
