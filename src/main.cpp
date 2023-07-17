@@ -1,5 +1,6 @@
 #include "gui_server.h"
 #include <thread>
+#include <iostream>
 #include <fstream>
 
 #define LOCALHOST_ADDRESS "127.0.0.1"
