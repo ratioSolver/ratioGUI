@@ -7,7 +7,7 @@ namespace ratio::gui
         add_file_route("^/$", "client/dist/index.html");
         add_file_route("^/favicon.ico$", "client/dist");
         add_file_route("^/assets/.*$", "client/dist");
-        add_ws_route("^/solver$").on_open(std::bind(&gui_server::on_ws_open, this, std::placeholders::_1)).on_message(std::bind(&gui_server::on_ws_message, this, std::placeholders::_1, std::placeholders::_2)).on_close(std::bind(&gui_server::on_ws_close, this, std::placeholders::_1));
+        add_ws_route("^/solver$").on_open(std::bind(&gui_server::on_ws_open, this, std::placeholders::_1)).on_message(std::bind(&gui_server::on_ws_message, this, std::placeholders::_1, std::placeholders::_2)).on_error(std::bind(&gui_server::on_ws_error, this, std::placeholders::_1, std::placeholders::_2)).on_close(std::bind(&gui_server::on_ws_close, this, std::placeholders::_1));
     }
 
     void gui_server::on_ws_open(network::websocket_session &ws)
@@ -54,10 +54,13 @@ namespace ratio::gui
         if (msg == "tick")
             exec.tick();
     }
-    void gui_server::on_ws_close(network::websocket_session &ws)
+    void gui_server::on_ws_error(network::websocket_session &ws, const boost::system::error_code &)
     {
         std::lock_guard<std::mutex> _(mtx);
         sessions.erase(&ws);
+    }
+    void gui_server::on_ws_close(network::websocket_session &)
+    {
     }
 
     void gui_server::log(const std::string &msg)
