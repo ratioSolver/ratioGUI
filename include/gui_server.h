@@ -15,6 +15,7 @@ namespace ratio::gui
   private:
     void on_ws_open(network::websocket_session &ws);
     void on_ws_message(network::websocket_session &ws, const std::string &msg);
+    void on_ws_error(network::websocket_session &ws, const boost::system::error_code &ec);
     void on_ws_close(network::websocket_session &ws);
 
   private:
