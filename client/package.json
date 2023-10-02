@@ -1,6 +1,6 @@
 {
   "name": "ratio-solver",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -20,8 +20,8 @@
     "vite": "^3.1.9",
     "vite-plugin-vuetify": "^1.0.0-alpha.12"
   },
-  "exports": [
-    "./src/solver.js",
-    "./src/solverD3.js"
-  ]
+  "exports": {
+    ".": "./solver.js",
+    "./D3": "./solverD3.json"
+  }
 }
