@@ -4,9 +4,38 @@ namespace ratio::gui
 {
     gui_server::gui_server(ratio::executor::executor &c_exec, const std::string &address, unsigned short port) : server(address, port), core_listener(c_exec.get_solver()), solver_listener(c_exec.get_solver()), executor_listener(c_exec)
     {
-        add_file_route("^/$", "client/dist/index.html");
-        add_file_route("^/favicon.ico$", "client/dist");
-        add_file_route("^/assets/.*$", "client/dist");
+        add_route(boost::beast::http::verb::get, "^/$", std::function{[](const string_req &, file_res &res)
+                                                                      {
+                                                                          res.result(boost::beast::http::status::ok);
+                                                                          boost::beast::error_code ec;
+                                                                          res.body().open("client/dist/index.html", boost::beast::file_mode::read, ec);
+                                                                          if (ec)
+                                                                              LOG_ERR("Failed to open index.html: " << ec.message());
+                                                                      }});
+
+        add_route(boost::beast::http::verb::get, "^/favicon.ico$", std::function{[](const string_req &, file_res &res)
+                                                                                 {
+                                                                                     res.result(boost::beast::http::status::ok);
+                                                                                     res.set(boost::beast::http::field::content_type, "image/x-icon");
+                                                                                     boost::beast::error_code ec;
+                                                                                     res.body().open("client/dist/favicon.ico", boost::beast::file_mode::read, ec);
+                                                                                     if (ec)
+                                                                                         LOG_ERR("Failed to open favicon.ico: " << ec.message());
+                                                                                 }});
+
+        add_route(boost::beast::http::verb::get, "^/assets/.*$", std::function{[](const string_req &req, file_res &res)
+                                                                               {
+                                                                                   std::string target = req.target().to_string();
+                                                                                   if (target.find('?') != std::string::npos)
+                                                                                       target = target.substr(0, target.find('?'));
+                                                                                   res.result(boost::beast::http::status::ok);
+                                                                                   res.set(boost::beast::http::field::content_type, network::mime_types.at(target.substr(target.find_last_of('.') + 1)));
+                                                                                   boost::beast::error_code ec;
+                                                                                   res.body().open(("client/dist" + target).c_str(), boost::beast::file_mode::read, ec);
+                                                                                   if (ec)
+                                                                                       LOG_ERR("Failed to open " << target << ": " << ec.message());
+                                                                               }});
+
         add_ws_route("^/solver$").on_open(std::bind(&gui_server::on_ws_open, this, std::placeholders::_1)).on_message(std::bind(&gui_server::on_ws_message, this, std::placeholders::_1, std::placeholders::_2)).on_error(std::bind(&gui_server::on_ws_error, this, std::placeholders::_1, std::placeholders::_2)).on_close(std::bind(&gui_server::on_ws_close, this, std::placeholders::_1));
     }
 
@@ -222,8 +251,8 @@ namespace ratio::gui
 
     void gui_server::broadcast(const std::string &&msg)
     {
-        auto msg_ptr = utils::c_ptr<network::message>(new network::message(std::move(msg)));
+        std::shared_ptr<std::string> m = std::make_shared<std::string>(msg);
         for (auto session : sessions)
-            session->send(msg_ptr);
+            session->send(m);
     }
 } // namespace ratio::gui

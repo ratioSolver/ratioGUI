@@ -5,6 +5,10 @@
 #include "solver_listener.h"
 #include "executor_listener.h"
 
+using string_req = boost::beast::http::request<boost::beast::http::string_body>;
+using string_res = boost::beast::http::response<boost::beast::http::string_body>;
+using file_res = boost::beast::http::response<boost::beast::http::file_body>;
+
 namespace ratio::gui
 {
   class gui_server : public network::server, public riddle::core_listener, public ratio::solver_listener, public ratio::executor::executor_listener
