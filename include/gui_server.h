@@ -14,7 +14,7 @@ namespace ratio::gui
   class gui_server : public network::server, public riddle::core_listener, public ratio::solver_listener, public ratio::executor::executor_listener
   {
   public:
-    gui_server(ratio::executor::executor &exec, const std::string &address = "0.0.0.0", unsigned short port = 8080);
+    gui_server(ratio::executor::executor &exec, const std::string &address = RATIO_HOST, unsigned short port = RATIO_PORT);
 
   private:
     void on_ws_open(network::websocket_session &ws);

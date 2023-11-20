@@ -18,6 +18,9 @@ find_package(Boost REQUIRED)
 include(CTest)
 enable_testing()
 
+set(RATIO_HOST "127.0.0.1" CACHE STRING "The oRatio host")
+set(RATIO_PORT "8080" CACHE STRING "The oRatio port")
+
 set(COMPUTE_NAMES ON CACHE BOOL "Computes the objects' names" FORCE)
 set(RATIONET_INCLUDE_UTILS OFF CACHE BOOL "Include utils library" FORCE)
 
@@ -30,6 +33,7 @@ file(GLOB RATIO_GUI_HEADERS include/*.h)
 add_executable(${PROJECT_NAME} ${RATIO_GUI_SOURCES})
 target_include_directories(${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>/include $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}> $<INSTALL_INTERFACE:> ${Boost_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PRIVATE PlExA ratioNet ${CMAKE_THREAD_LIBS_INIT})
+target_compile_definitions(${PROJECT_NAME} PRIVATE RATIO_HOST="${RATIO_HOST}" RATIO_PORT=${RATIO_PORT})
 
 if(MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE /W4)
