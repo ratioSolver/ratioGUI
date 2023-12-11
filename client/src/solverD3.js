@@ -32,6 +32,32 @@ export class SolverD3 extends Solver {
         super(id, name, state);
     }
 
+    /**
+     * Creates a new SolverD3 from a Solver object.
+     * 
+     * @param {*} solver, the solver object to be converted
+     * @returns a new SolverD3 object with the same attributes as the solver object
+     */
+    static from_solver(solver) {
+        let solver_d3 = new SolverD3(solver.id, solver.name, solver.state);
+
+        solver_d3.items = solver.items;
+        solver_d3.atoms = solver.atoms;
+
+        solver_d3.timelines = solver.timelines;
+        solver_d3.origin = solver.origin;
+        solver_d3.horizon = solver.horizon;
+
+        solver_d3.nodes = solver.nodes;
+        solver_d3.edges = solver.edges;
+        solver_d3.current_flaw = solver.current_flaw;
+        solver_d3.current_resolver = solver.current_resolver;
+
+        solver_d3.current_time = solver.current_time;
+        solver_d3.executing_tasks = solver.executing_tasks;
+        return solver_d3;
+    }
+
     init(timelines_id = 'timelines', graph_id = 'graph', width, height) {
         this.timelines_svg = d3.select('#' + timelines_id).append('svg')
             .attr('viewBox', '0 0 ' + width + ' ' + height);
