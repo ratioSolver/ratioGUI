@@ -38,6 +38,13 @@ export namespace solver {
     private c_flaw: flaw | null = null;
     private c_resolver: resolver | null = null;
 
+    init(flaws: Map<number, flaw>, resolvers: Map<number, resolver>, c_flaw: flaw | null, c_resolver: resolver | null): void {
+      this.flaws = flaws;
+      this.resolvers = resolvers;
+      this.c_flaw = c_flaw;
+      this.c_resolver = c_resolver;
+      for (const listener of this.solver_listeners) listener.init(flaws, resolvers, c_flaw, c_resolver);
+    }
     flaw_created(flaw: flaw): void {
       this.flaws.set(flaw.get_id(), flaw);
       for (const listener of this.solver_listeners) listener.flaw_created(flaw);
@@ -61,7 +68,10 @@ export namespace solver {
       for (const listener of this.solver_listeners) listener.current_resolver(resolver);
     }
 
-    add_solver_listener(listener: solver_listener) { this.solver_listeners.add(listener); }
+    add_solver_listener(listener: solver_listener) {
+      this.solver_listeners.add(listener);
+      listener.init(this.flaws, this.resolvers, this.c_flaw, this.c_resolver);
+    }
     remove_solver_listener(listener: solver_listener) { this.solver_listeners.delete(listener); }
   }
 
@@ -96,6 +106,8 @@ export namespace solver {
   }
 
   export interface solver_listener {
+
+    init(flaws: Map<number, flaw>, resolvers: Map<number, resolver>, c_flaw: flaw | null, c_resolver: resolver | null): void;
 
     flaw_created(flaw: flaw): void;
     flaw_cost_changed(flaw: flaw): void;
