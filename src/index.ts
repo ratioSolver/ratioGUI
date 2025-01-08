@@ -4,6 +4,8 @@ import cytoscapePopper, { RefElement } from 'cytoscape-popper';
 import tippy from 'tippy.js';
 
 export { solver } from './solver';
+export { SolverGraph } from './solver_graph';
+export { TimelinesChart } from './solver_timelines';
 
 function tippyFactory(ref: RefElement, content: HTMLElement) {
   // Since tippy constructor requires DOM element/elements, create a placeholder
