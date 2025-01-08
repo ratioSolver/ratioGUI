@@ -57,6 +57,10 @@ export namespace solver {
       this.state = state;
     }
 
+    get_id(): number { return this.id; }
+    get_name(): string { return this.name; }
+    get_state(): SolverState { return this.state; }
+
     init(items: Map<string, values.Value>, atoms: Map<number, values.Atom>, flaws: Map<number, graph.Flaw>, resolvers: Map<number, graph.Resolver>, c_flaw: graph.Flaw | null, c_resolver: graph.Resolver | null): void {
       this.items = items;
       this.atoms = atoms;
@@ -187,7 +191,7 @@ export namespace solver {
       get_state(): State { return this.state; }
       get_intrinsic_cost(): number { return this.intrinsic_cost; }
 
-      estimate_cost(): number {
+      get_cost(): number {
         if (this.state == State.forbidden)
           return Infinity;
         return (this.preconditions.length ? Math.max.apply(null, this.preconditions.map(flaw => flaw.get_cost())) : 0) + this.intrinsic_cost;
