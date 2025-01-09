@@ -68,7 +68,6 @@ export namespace solver {
       this.resolvers = resolvers;
       this.c_flaw = c_flaw;
       this.c_resolver = c_resolver;
-      for (const listener of this.solver_listeners) listener.init(items, atoms, flaws, resolvers, c_flaw, c_resolver);
     }
     flaw_created(flaw: graph.Flaw): void {
       this.flaws.set(flaw.get_id(), flaw);
