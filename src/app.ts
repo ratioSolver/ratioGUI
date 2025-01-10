@@ -1,9 +1,16 @@
-class App implements AppListener {
+export class App implements AppListener {
 
+  private static instance: App;
   private selected_comp: Component<any, HTMLElement> | null = null;
   private app_listeners: Set<AppListener> = new Set();
 
-  constructor() { }
+  private constructor() { }
+
+  static get_instance() {
+    if (!App.instance)
+      App.instance = new App();
+    return App.instance;
+  }
 
   get_selected_component(): Component<any, HTMLElement> | null { return this.selected_comp; }
 
@@ -88,17 +95,9 @@ export abstract class ListComponent<P, E extends HTMLElement, L extends HTMLElem
 
 export class AppComponent extends Component<App, HTMLDivElement> {
 
-  private static instance: AppComponent;
-
   private constructor() {
-    super(new App(), document.querySelector('#app') as HTMLDivElement);
+    super(App.get_instance(), document.querySelector('#app') as HTMLDivElement);
     this.element.classList.add('d-flex', 'flex-column', 'h-100');
-  }
-
-  static get_instance() {
-    if (!AppComponent.instance)
-      AppComponent.instance = new AppComponent();
-    return AppComponent.instance;
   }
 }
 

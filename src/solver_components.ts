@@ -1,4 +1,4 @@
-import { AppComponent, Component, AnchorComponent, UListComponent } from './app';
+import { App, Component, AnchorComponent, UListComponent } from './app';
 import { solver } from "./solver";
 import { library, icon } from '@fortawesome/fontawesome-svg-core'
 import { faBrain, faPauseCircle, faPlayCircle, faCheckCircle, faXmarkCircle } from '@fortawesome/free-solid-svg-icons'
@@ -12,7 +12,7 @@ export class SolverAnchor extends AnchorComponent<solver.Solver> implements solv
   constructor(solver: solver.Solver) {
     super(solver);
     solver.add_solver_listener(this);
-    this.element.addEventListener('click', () => { AppComponent.get_instance().payload.selected_component(this); });
+    this.element.addEventListener('click', () => { App.get_instance().selected_component(this); });
   }
 
   init(items: Map<string, solver.values.Value>, atoms: Map<number, solver.values.Atom>, state: solver.SolverState, flaws: Map<number, solver.graph.Flaw>, resolvers: Map<number, solver.graph.Resolver>, c_flaw: solver.graph.Flaw | null, c_resolver: solver.graph.Resolver | null): void { this.render(); }
@@ -29,8 +29,8 @@ export class SolverAnchor extends AnchorComponent<solver.Solver> implements solv
 
   unmounting(): void {
     this.payload.remove_solver_listener(this);
-    if (AppComponent.get_instance().payload.get_selected_component() === this)
-      AppComponent.get_instance().payload.selected_component(null);
+    if (App.get_instance().get_selected_component() === this)
+      App.get_instance().selected_component(null);
   }
 }
 
