@@ -15,6 +15,8 @@ export class App implements AppListener {
   get_selected_component(): Component<any, HTMLElement> | null { return this.selected_comp; }
 
   selected_component(component: Component<any, HTMLElement> | null): void {
+    if (this.selected_comp)
+      this.selected_comp.remove();
     this.selected_comp = component;
     for (const listener of this.app_listeners) { listener.selected_component(component); }
   }
@@ -93,12 +95,60 @@ export abstract class ListComponent<P, E extends HTMLElement, L extends HTMLElem
   }
 }
 
-export class AppComponent extends Component<App, HTMLDivElement> {
+export class AppComponent extends Component<App, HTMLDivElement> implements AppListener {
 
-  private constructor() {
+  private main: HTMLDivElement;
+
+  constructor() {
     super(App.get_instance(), document.querySelector('#app') as HTMLDivElement);
     this.element.classList.add('d-flex', 'flex-column', 'h-100');
+
+    const fragment = document.createDocumentFragment();
+
+    // Add the Navbar..
+    const navbar = document.createElement('nav');
+    navbar.classList.add('navbar', 'navbar-expand-lg', 'bg-body-tertiary');
+    const nav_container = document.createElement('div');
+    nav_container.classList.add('container-fluid');
+
+    const toggler = document.createElement('button');
+    toggler.classList.add('navbar-toggler');
+    toggler.type = 'button';
+    toggler.setAttribute('data-bs-toggle', 'collapse');
+    toggler.setAttribute('data-bs-target', '#navbarNav');
+    toggler.setAttribute('aria-controls', 'navbarNav');
+    toggler.setAttribute('aria-expanded', 'false');
+    toggler.setAttribute('aria-label', 'Toggle navigation');
+    const toggler_span = document.createElement('span');
+    toggler_span.classList.add('navbar-toggler-icon');
+    toggler.appendChild(toggler_span);
+    nav_container.appendChild(toggler);
+
+    const navbar_collapse = document.createElement('div');
+    navbar_collapse.classList.add('collapse', 'navbar-collapse');
+    navbar_collapse.id = 'navbarNav';
+    this.populate_navbar(navbar_collapse);
+    nav_container.appendChild(navbar_collapse);
+
+    navbar.appendChild(nav_container);
+    fragment.appendChild(navbar);
+
+    // Add the Main..
+    this.main = document.createElement('div');
+    this.main.classList.add('d-flex', 'flex-column', 'flex-grow-1');
+    fragment.appendChild(this.main);
+
+    this.element.appendChild(fragment);
   }
+
+  selected_component(component: Component<any, HTMLElement> | null): void {
+    if (component)
+      this.main.appendChild(component.element);
+  }
+
+  populate_navbar(container: HTMLDivElement): void { }
+
+  unmounting(): void { App.get_instance().remove_app_listener(this); }
 }
 
 export class AnchorComponent<P> extends Component<P, HTMLAnchorElement> {
