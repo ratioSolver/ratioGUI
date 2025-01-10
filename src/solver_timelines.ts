@@ -1,6 +1,6 @@
 import { Component } from "./app";
 import { solver } from "./solver";
-import Plotly, { Shape } from 'plotly.js';
+import Plotly, { Shape } from 'plotly.js-dist-min';
 export class TimelinesChart extends Component<solver.Solver, HTMLDivElement> implements solver.SolverListener {
 
   private current_time: Partial<Shape> = {
