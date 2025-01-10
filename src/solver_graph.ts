@@ -67,13 +67,15 @@ export class SolverGraph implements solver.SolverListener {
     solver.add_solver_listener(this);
   }
 
-  init(items: Map<string, solver.values.Value>, atoms: Map<number, solver.values.Atom>, flaws: Map<number, solver.graph.Flaw>, resolvers: Map<number, solver.graph.Resolver>, c_flaw: solver.graph.Flaw | null, c_resolver: solver.graph.Resolver | null): void {
+  init(items: Map<string, solver.values.Value>, atoms: Map<number, solver.values.Atom>, state: solver.SolverState, flaws: Map<number, solver.graph.Flaw>, resolvers: Map<number, solver.graph.Resolver>, c_flaw: solver.graph.Flaw | null, c_resolver: solver.graph.Resolver | null): void {
     this.cy.elements().remove(); // We clear the graph
     for (const [_, flaw] of flaws) {
       const fn = this.cy.add({ group: 'nodes', data: { id: flaw.get_id().toString(), type: 'flaw', label: '****', color: color(flaw), stroke: stroke_style(flaw) } });
     }
     this.cy.layout(this.layout).run();
   }
+
+  state_changed(state: solver.SolverState): void { }
 
   flaw_created(flaw: solver.graph.Flaw): void {
     const fn = this.cy.add({ group: 'nodes', data: { id: flaw.get_id().toString(), type: 'flaw', label: '****', color: color(flaw), stroke: stroke_style(flaw) } });

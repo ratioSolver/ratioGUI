@@ -31,17 +31,14 @@ export class TimelinesChart implements solver.SolverListener {
     this.solver.add_solver_listener(this);
   }
 
-  init(items: Map<string, solver.values.Value>, atoms: Map<number, solver.values.Atom>, flaws: Map<number, solver.graph.Flaw>, resolvers: Map<number, solver.graph.Resolver>, c_flaw: solver.graph.Flaw | null, c_resolver: solver.graph.Resolver | null): void {
+  init(items: Map<string, solver.values.Value>, atoms: Map<number, solver.values.Atom>, state: solver.SolverState, flaws: Map<number, solver.graph.Flaw>, resolvers: Map<number, solver.graph.Resolver>, c_flaw: solver.graph.Flaw | null, c_resolver: solver.graph.Resolver | null): void {
     Plotly.react('slv-' + this.solver.get_id() + '-timelines', [], this.layout, this.config);
   }
 
+  state_changed(state: solver.SolverState): void { }
   flaw_created(flaw: solver.graph.Flaw): void { }
-
   flaw_cost_changed(flaw: solver.graph.Flaw): void { }
-
   current_flaw(flaw: solver.graph.Flaw): void { }
-
   resolver_created(resolver: solver.graph.Resolver): void { }
-
   current_resolver(resolver: solver.graph.Resolver): void { }
 }

@@ -1,4 +1,5 @@
 export namespace solver {
+
   class Env implements EnvListener {
 
     protected items: Map<string, values.Value> = new Map();
@@ -61,13 +62,18 @@ export namespace solver {
     get_name(): string { return this.name; }
     get_state(): SolverState { return this.state; }
 
-    init(items: Map<string, values.Value>, atoms: Map<number, values.Atom>, flaws: Map<number, graph.Flaw>, resolvers: Map<number, graph.Resolver>, c_flaw: graph.Flaw | null, c_resolver: graph.Resolver | null): void {
+    init(items: Map<string, values.Value>, atoms: Map<number, values.Atom>, state: SolverState, flaws: Map<number, graph.Flaw>, resolvers: Map<number, graph.Resolver>, c_flaw: graph.Flaw | null, c_resolver: graph.Resolver | null): void {
       this.items = items;
       this.atoms = atoms;
+      this.state = state;
       this.flaws = flaws;
       this.resolvers = resolvers;
       this.c_flaw = c_flaw;
       this.c_resolver = c_resolver;
+    }
+    state_changed(state: SolverState): void {
+      this.state = state;
+      for (const listener of this.solver_listeners) listener.state_changed(state);
     }
     flaw_created(flaw: graph.Flaw): void {
       this.flaws.set(flaw.get_id(), flaw);
@@ -94,14 +100,16 @@ export namespace solver {
 
     add_solver_listener(listener: SolverListener) {
       this.solver_listeners.add(listener);
-      listener.init(this.items, this.atoms, this.flaws, this.resolvers, this.c_flaw, this.c_resolver);
+      listener.init(this.items, this.atoms, this.state, this.flaws, this.resolvers, this.c_flaw, this.c_resolver);
     }
     remove_solver_listener(listener: SolverListener) { this.solver_listeners.delete(listener); }
   }
 
   export interface SolverListener {
 
-    init(items: Map<string, values.Value>, atoms: Map<number, values.Atom>, flaws: Map<number, graph.Flaw>, resolvers: Map<number, graph.Resolver>, c_flaw: graph.Flaw | null, c_resolver: graph.Resolver | null): void;
+    init(items: Map<string, values.Value>, atoms: Map<number, values.Atom>, state: SolverState, flaws: Map<number, graph.Flaw>, resolvers: Map<number, graph.Resolver>, c_flaw: graph.Flaw | null, c_resolver: graph.Resolver | null): void;
+
+    state_changed(state: SolverState): void;
 
     flaw_created(flaw: graph.Flaw): void;
     flaw_cost_changed(flaw: graph.Flaw): void;
@@ -109,6 +117,35 @@ export namespace solver {
 
     resolver_created(resolver: graph.Resolver): void;
     current_resolver(resolver: graph.Resolver): void;
+  }
+
+  export class SolverSet implements SolverSetListener {
+
+    private solvers: Map<number, solver.Solver> = new Map();
+    private solver_set_listeners: Set<SolverSetListener> = new Set();
+
+    init(solvers: Map<number, Solver>): void {
+      this.solvers = solvers;
+    }
+
+    solver_created(solver: Solver): void {
+      this.solvers.set(solver.get_id(), solver);
+      for (const listener of this.solver_set_listeners) { listener.solver_created(solver); }
+    }
+
+    solver_deleted(id: number): void {
+      this.solvers.delete(id);
+      for (const listener of this.solver_set_listeners) { listener.solver_deleted(id); }
+    }
+  }
+
+  export interface SolverSetListener {
+
+    init(solvers: Map<number, Solver>): void;
+
+    solver_created(solver: Solver): void;
+
+    solver_deleted(id: number): void;
   }
 
   export namespace graph {
