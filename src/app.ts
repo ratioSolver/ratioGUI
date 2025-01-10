@@ -68,7 +68,10 @@ export class AppComponent extends Component<App, HTMLDivElement> implements AppL
   private selected_comp: Component<any, HTMLElement> | null = null;
   private app_listeners: Set<AppListener> = new Set();
 
-  private constructor() { super(new App(), document.querySelector('#app') as HTMLDivElement); }
+  private constructor() {
+    super(new App(), document.querySelector('#app') as HTMLDivElement);
+    this.element.classList.add('d-flex', 'flex-column', 'h-100');
+  }
 
   static get_instance() {
     if (!AppComponent.instance) {

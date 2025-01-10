@@ -50,6 +50,14 @@ export class SolverListComponent extends UListComponent<solver.Solver> {
   }
 }
 
+export class SolverComponent extends Component<solver.Solver, HTMLDivElement> {
+
+  constructor(solver: solver.Solver) {
+    super(solver, document.createElement('div'));
+    this.element.classList.add('flex-grow-1', 'd-flex', 'flex-column');
+  }
+}
+
 function to_icon(state: solver.SolverState): string[] {
   switch (state) {
     case solver.SolverState.reasoning:
