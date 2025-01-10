@@ -83,7 +83,7 @@ export namespace solver {
       this.flaws.set(flaw.get_id(), flaw);
       for (const listener of this.solver_listeners) listener.flaw_cost_changed(flaw);
     }
-    current_flaw(flaw: graph.Flaw): void {
+    current_flaw(flaw: graph.Flaw | null): void {
       this.c_flaw = flaw;
       if (this.c_resolver)
         this.current_resolver(null);
@@ -93,7 +93,7 @@ export namespace solver {
       this.resolvers.set(resolver.get_id(), resolver);
       for (const listener of this.solver_listeners) listener.resolver_created(resolver);
     }
-    current_resolver(resolver: graph.Resolver): void {
+    current_resolver(resolver: graph.Resolver | null): void {
       this.c_resolver = resolver;
       for (const listener of this.solver_listeners) listener.current_resolver(resolver);
     }
@@ -113,10 +113,10 @@ export namespace solver {
 
     flaw_created(flaw: graph.Flaw): void;
     flaw_cost_changed(flaw: graph.Flaw): void;
-    current_flaw(flaw: graph.Flaw): void;
+    current_flaw(flaw: graph.Flaw | null): void;
 
     resolver_created(resolver: graph.Resolver): void;
-    current_resolver(resolver: graph.Resolver): void;
+    current_resolver(resolver: graph.Resolver | null): void;
   }
 
   export class SolverSet implements SolverSetListener {
@@ -297,7 +297,7 @@ export namespace solver {
         this.val = val;
       }
 
-      to_string(_, expressive = false): string {
+      to_string(_: Map<number, Value>, expressive = false): string {
         switch (this.val) {
           case LBool.True:
             return expressive ? 'true' : '⊤';
@@ -323,7 +323,7 @@ export namespace solver {
         this.ub = ub;
       }
 
-      to_string(_, expressive = false): string {
+      to_string(_: Map<number, Value>, expressive = false): string {
         if (expressive) {
           let res = `${this.val}`;
           if (this.lb || this.ub)
@@ -348,7 +348,7 @@ export namespace solver {
         this.ub = ub;
       }
 
-      to_string(_, expressive = false): string {
+      to_string(_: Map<number, Value>, expressive = false): string {
         if (expressive) {
           let res = `${this.val.to_string()}`;
           if (this.lb || this.ub)
@@ -373,7 +373,7 @@ export namespace solver {
         this.ub = ub;
       }
 
-      to_string(_, expressive = false): string {
+      to_string(_: Map<number, Value>, expressive = false): string {
         if (expressive) {
           let res = `${this.val.to_string()}`;
           if (this.lb || this.ub)
@@ -428,6 +428,7 @@ export namespace solver {
       constructor(id: number, type: string, name: string) {
         super();
         this.id = id;
+        this.type = type;
         this.name = name;
       }
 

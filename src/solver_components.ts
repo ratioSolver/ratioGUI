@@ -19,9 +19,9 @@ export class SolverAnchor extends AnchorComponent<solver.Solver> implements solv
   state_changed(state: solver.SolverState): void { this.render(); }
   flaw_created(flaw: solver.graph.Flaw): void { }
   flaw_cost_changed(flaw: solver.graph.Flaw): void { }
-  current_flaw(flaw: solver.graph.Flaw): void { }
+  current_flaw(flaw: solver.graph.Flaw | null): void { }
   resolver_created(resolver: solver.graph.Resolver): void { }
-  current_resolver(resolver: solver.graph.Resolver): void { }
+  current_resolver(resolver: solver.graph.Resolver | null): void { }
 
   private render(): void {
     this.element.innerHTML = to_icon(this.payload.get_state()) + ' ' + this.payload.get_name();

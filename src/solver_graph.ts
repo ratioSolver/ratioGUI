@@ -90,7 +90,7 @@ export class SolverGraph extends Component<solver.Solver, HTMLDivElement> implem
     this.cy.layout(this.layout).run();
   }
 
-  current_flaw(flaw: solver.graph.Flaw): void {
+  current_flaw(flaw: solver.graph.Flaw | null): void {
     this.cy.layout(this.layout).run();
   }
 
@@ -99,7 +99,7 @@ export class SolverGraph extends Component<solver.Solver, HTMLDivElement> implem
     this.cy.layout(this.layout).run();
   }
 
-  current_resolver(resolver: solver.graph.Resolver): void {
+  current_resolver(resolver: solver.graph.Resolver | null): void {
     this.cy.layout(this.layout).run();
   }
 

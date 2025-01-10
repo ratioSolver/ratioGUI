@@ -1,28 +1,27 @@
 import { Component } from "./app";
 import { solver } from "./solver";
-import Plotly from 'plotly.js';
+import Plotly, { Shape } from 'plotly.js';
 
 export class TimelinesChart extends Component<solver.Solver, HTMLDivElement> implements solver.SolverListener {
 
+  private current_time: Partial<Shape> = {
+    type: 'line',
+    x0: 0,
+    y0: 0,
+    x1: 0,
+    y1: 1,
+    xref: 'x',
+    yref: 'paper',
+    line: {
+      color: 'darkgrey',
+      width: 2
+    }
+  };
   private layout = {
     autosize: true,
     xaxis: { title: 'Time' },
     showlegend: false,
-    shapes: [
-      {
-        type: 'line',
-        x0: 0,
-        y0: 0,
-        x1: 0,
-        y1: 1,
-        xref: 'x',
-        yref: 'paper',
-        line: {
-          color: 'darkgrey',
-          width: 2
-        }
-      }
-    ]
+    shapes: [this.current_time],
   };
   private config = { responsive: true, displaylogo: false };
 
@@ -39,9 +38,9 @@ export class TimelinesChart extends Component<solver.Solver, HTMLDivElement> imp
   state_changed(state: solver.SolverState): void { }
   flaw_created(flaw: solver.graph.Flaw): void { }
   flaw_cost_changed(flaw: solver.graph.Flaw): void { }
-  current_flaw(flaw: solver.graph.Flaw): void { }
+  current_flaw(flaw: solver.graph.Flaw | null): void { }
   resolver_created(resolver: solver.graph.Resolver): void { }
-  current_resolver(resolver: solver.graph.Resolver): void { }
+  current_resolver(resolver: solver.graph.Resolver | null): void { }
 
   unmounting(): void { this.payload.remove_solver_listener(this); }
 }
