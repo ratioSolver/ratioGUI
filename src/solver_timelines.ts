@@ -1,9 +1,9 @@
+import { Component } from "./app";
 import { solver } from "./solver";
 import Plotly from 'plotly.js';
 
-export class TimelinesChart implements solver.SolverListener {
+export class TimelinesChart extends Component<solver.Solver, HTMLDivElement> implements solver.SolverListener {
 
-  private solver: solver.Solver;
   private layout = {
     autosize: true,
     xaxis: { title: 'Time' },
@@ -27,12 +27,13 @@ export class TimelinesChart implements solver.SolverListener {
   private config = { responsive: true, displaylogo: false };
 
   constructor(solver: solver.Solver) {
-    this.solver = solver;
-    this.solver.add_solver_listener(this);
+    super(solver, document.querySelector('#slv-' + solver.get_id() + '-timelines') as HTMLDivElement);
+    this.element.classList.add('d-flex', 'flex-column', 'flex-grow-1');
+    solver.add_solver_listener(this);
   }
 
   init(items: Map<string, solver.values.Value>, atoms: Map<number, solver.values.Atom>, state: solver.SolverState, flaws: Map<number, solver.graph.Flaw>, resolvers: Map<number, solver.graph.Resolver>, c_flaw: solver.graph.Flaw | null, c_resolver: solver.graph.Resolver | null): void {
-    Plotly.react('slv-' + this.solver.get_id() + '-timelines', [], this.layout, this.config);
+    Plotly.react(this.element, [], this.layout, this.config);
   }
 
   state_changed(state: solver.SolverState): void { }
@@ -41,4 +42,6 @@ export class TimelinesChart implements solver.SolverListener {
   current_flaw(flaw: solver.graph.Flaw): void { }
   resolver_created(resolver: solver.graph.Resolver): void { }
   current_resolver(resolver: solver.graph.Resolver): void { }
+
+  unmounting(): void { this.payload.remove_solver_listener(this); }
 }

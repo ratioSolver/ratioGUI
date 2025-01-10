@@ -1,6 +1,24 @@
-class App {
+class App implements AppListener {
+
+  private selected_comp: Component<any, HTMLElement> | null = null;
+  private app_listeners: Set<AppListener> = new Set();
 
   constructor() { }
+
+  get_selected_component(): Component<any, HTMLElement> | null { return this.selected_comp; }
+
+  selected_component(component: Component<any, HTMLElement> | null): void {
+    this.selected_comp = component;
+    for (const listener of this.app_listeners) { listener.selected_component(component); }
+  }
+
+  add_app_listener(listener: AppListener): void {
+    this.app_listeners.add(listener);
+  }
+
+  remove_app_listener(listener: AppListener): void {
+    this.app_listeners.delete(listener);
+  }
 }
 
 export interface AppListener {
@@ -19,11 +37,11 @@ export abstract class Component<P, E extends HTMLElement> {
   }
 
   remove(): void {
+    this.unmounting();
     this.element.remove();
-    this.unmounted();
   }
 
-  unmounted(): void { }
+  unmounting(): void { }
 }
 
 export abstract class ListComponent<P, E extends HTMLElement, L extends HTMLElement> extends Component<Component<P, E>[], L> {
@@ -60,13 +78,17 @@ export abstract class ListComponent<P, E extends HTMLElement, L extends HTMLElem
     } else
       throw new Error('Child not found');
   }
+
+  remove(): void {
+    for (const child of this.children)
+      child.remove();
+    super.remove();
+  }
 }
 
-export class AppComponent extends Component<App, HTMLDivElement> implements AppListener {
+export class AppComponent extends Component<App, HTMLDivElement> {
 
   private static instance: AppComponent;
-  private selected_comp: Component<any, HTMLElement> | null = null;
-  private app_listeners: Set<AppListener> = new Set();
 
   private constructor() {
     super(new App(), document.querySelector('#app') as HTMLDivElement);
@@ -74,25 +96,9 @@ export class AppComponent extends Component<App, HTMLDivElement> implements AppL
   }
 
   static get_instance() {
-    if (!AppComponent.instance) {
+    if (!AppComponent.instance)
       AppComponent.instance = new AppComponent();
-    }
     return AppComponent.instance;
-  }
-
-  get_selected_component(): Component<any, HTMLElement> | null { return this.selected_comp; }
-
-  selected_component(component: Component<any, HTMLElement> | null): void {
-    this.selected_comp = component;
-    for (const listener of this.app_listeners) { listener.selected_component(component); }
-  }
-
-  add_app_listener(listener: AppListener): void {
-    this.app_listeners.add(listener);
-  }
-
-  remove_app_listener(listener: AppListener): void {
-    this.app_listeners.delete(listener);
   }
 }
 

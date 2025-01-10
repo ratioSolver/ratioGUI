@@ -1,3 +1,4 @@
+import { Component } from "./app";
 import { solver } from "./solver";
 import cytoscape from 'cytoscape';
 import { interpolateRgb } from 'd3-interpolate';
@@ -5,7 +6,7 @@ import { interpolateRgb } from 'd3-interpolate';
 const costColorScale = interpolateRgb("green", "red");
 const infiniteColor = "black";
 
-export class SolverGraph implements solver.SolverListener {
+export class SolverGraph extends Component<solver.Solver, HTMLDivElement> implements solver.SolverListener {
 
   cy: cytoscape.Core;
   layout = {
@@ -18,8 +19,10 @@ export class SolverGraph implements solver.SolverListener {
   };
 
   constructor(solver: solver.Solver) {
+    super(solver, document.querySelector('#slv-' + solver.get_id() + '-graph') as HTMLDivElement);
+    this.element.classList.add('d-flex', 'flex-column', 'flex-grow-1');
     this.cy = cytoscape({
-      container: document.getElementById('slv-' + solver.get_id() + '-graph'),
+      container: this.element,
       style: [
         {
           selector: 'node[type="flaw"]',
@@ -99,6 +102,8 @@ export class SolverGraph implements solver.SolverListener {
   current_resolver(resolver: solver.graph.Resolver): void {
     this.cy.layout(this.layout).run();
   }
+
+  unmounting(): void { this.payload.remove_solver_listener(this); }
 }
 
 function color(flaw: solver.graph.Flaw | solver.graph.Resolver): string {
