@@ -1,3 +1,5 @@
+import { ConnectionListener } from "./utils/connection";
+
 export class App implements AppListener {
 
   private static instance: App;
@@ -95,7 +97,7 @@ export abstract class ListComponent<P, E extends HTMLElement, L extends HTMLElem
   }
 }
 
-export class AppComponent extends Component<App, HTMLDivElement> implements AppListener {
+export class AppComponent extends Component<App, HTMLDivElement> implements AppListener, ConnectionListener {
 
   private main: HTMLDivElement;
 
@@ -146,6 +148,11 @@ export class AppComponent extends Component<App, HTMLDivElement> implements AppL
       this.main.appendChild(component.element);
   }
 
+  connected(info: any): void { }
+  received_message(message: any): void { }
+  disconnected(): void { }
+  error(error: any): void { }
+
   populate_navbar(container: HTMLDivElement): void { }
 
   unmounting(): void { App.get_instance().remove_app_listener(this); }
@@ -154,6 +161,11 @@ export class AppComponent extends Component<App, HTMLDivElement> implements AppL
 export class AnchorComponent<P> extends Component<P, HTMLAnchorElement> {
 
   constructor(payload: P) { super(payload, document.createElement('a')); }
+}
+
+export class ButtonComponent<P> extends Component<P, HTMLButtonElement> {
+
+  constructor(payload: P) { super(payload, document.createElement('button')); }
 }
 
 export class UListComponent<P> extends ListComponent<P, HTMLLIElement, HTMLUListElement> {

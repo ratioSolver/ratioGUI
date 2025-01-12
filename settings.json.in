@@ -1,0 +1,6 @@
+{
+  "protocol": "@API_PROTOCOL@",
+  "hostname": "@API_HOSTNAME@",
+  "port": "@API_PORT@",
+  "ws_path": "@API_WS_PATH@"
+}

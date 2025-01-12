@@ -1,0 +1,6 @@
+{
+  "protocol": "http",
+  "hostname": "localhost",
+  "port": "80",
+  "ws_path": "ws"
+}
