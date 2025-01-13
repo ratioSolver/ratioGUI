@@ -1,4 +1,4 @@
-import settings from '../settings.json';
+import { Settings } from "./settings";
 
 export class Connection {
 
@@ -18,8 +18,8 @@ export class Connection {
     if (this.socket)
       this.socket.close();
 
-    console.debug('Connecting to server: ', settings.protocol + '://' + settings.hostname + ':' + settings.port);
-    this.socket = new WebSocket(settings.protocol + '://' + settings.hostname + ':' + settings.port + '/' + settings.ws_path);
+    console.debug('Connecting to server: ', Settings.get_instance().get_host());
+    this.socket = new WebSocket(Settings.get_instance().get_host() + '/' + Settings.get_instance().get_ws_path());
 
     this.socket.onopen = () => {
       console.debug('Connected to server');

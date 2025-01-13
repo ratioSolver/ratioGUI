@@ -7,10 +7,14 @@ import cytoscapePopper, { RefElement } from 'cytoscape-popper';
 import tippy from 'tippy.js';
 
 export * from './app';
+export * from './utils/connection';
+
 export { solver } from './solver/solver';
 export { SolverGraph } from './solver/solver_graph';
 export { TimelinesChart } from './solver/solver_timelines';
 export * from './solver/solver_components';
+
+
 
 function tippyFactory(ref: RefElement, content: HTMLElement) {
   // Since tippy constructor requires DOM element/elements, create a placeholder

@@ -1,4 +1,4 @@
-import settings from '../settings.json';
+import { Settings } from "./settings";
 import { Connection } from './connection';
 
 export class User {
@@ -25,7 +25,7 @@ export class CurrentUser implements UserListener {
   }
 
   async login(username: string, password: string, remember_input: boolean = false): Promise<boolean> {
-    const response = await fetch(settings.protocol + '://' + settings.hostname + ':' + settings.port + '/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username: username, password: password }) });
+    const response = await fetch(Settings.get_instance().get_host() + '/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username: username, password: password }) });
     if (response.ok) { // Login successful
       const data = await response.json();
       if (remember_input)
