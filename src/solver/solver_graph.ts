@@ -1,7 +1,6 @@
 import { Component } from "../app";
 import { solver } from "./solver";
 import cytoscape from 'cytoscape';
-import tippy, { Instance } from 'tippy.js';
 import { interpolateRgb } from 'd3-interpolate';
 
 const costColorScale = interpolateRgb("green", "red");
@@ -18,7 +17,6 @@ export class SolverGraph extends Component<solver.Solver, HTMLDivElement> implem
     animate: true,
     animationDuration: 100
   };
-  private tippys: Map<number, Instance> = new Map();
   private c_flaw: solver.graph.Flaw | null = null;
   private c_resolver: solver.graph.Resolver | null = null
 
@@ -76,25 +74,23 @@ export class SolverGraph extends Component<solver.Solver, HTMLDivElement> implem
 
   init(items: Map<string, solver.values.Value>, atoms: Map<number, solver.values.Atom>, state: solver.SolverState, flaws: Map<number, solver.graph.Flaw>, resolvers: Map<number, solver.graph.Resolver>, c_flaw: solver.graph.Flaw | null, c_resolver: solver.graph.Resolver | null): void {
     this.cy.elements().remove(); // We clear the graph
-    for (const [_, flaw] of flaws) {
-      const fn = this.cy.add({ group: 'nodes', data: { id: flaw.get_id().toString(), type: 'flaw', label: flaw.to_string(), color: color(flaw), stroke: stroke_style(flaw) } });
-      this.tippys.set(flaw.get_id(), tippy(document.createElement('div'), { getReferenceClientRect: fn.popperRef().getBoundingClientRect, content: flaw.to_string(true) }));
-      fn.on('mouseover', () => this.tippys.get(flaw.get_id())!.show());
-      fn.on('mouseout', () => this.tippys.get(flaw.get_id())!.hide());
-    }
+
+    for (const [_, flaw] of flaws)
+      this.create_flaw_node(flaw);
+
     for (const [_, resolver] of resolvers) {
-      const rn = this.cy.add({ group: 'nodes', data: { id: resolver.get_id().toString(), type: 'resolver', label: resolver.to_string(), color: color(resolver), stroke: stroke_style(resolver) } });
-      this.tippys.set(resolver.get_id(), tippy(document.createElement('div'), { getReferenceClientRect: rn.popperRef().getBoundingClientRect, content: resolver.to_string(true) }));
-      rn.on('mouseover', () => this.tippys.get(resolver.get_id())!.show());
-      rn.on('mouseout', () => this.tippys.get(resolver.get_id())!.hide());
+      this.create_resolver_node(resolver);
+
       this.cy.add({ group: 'edges', data: { id: `${resolver.get_id()}-${resolver.get_flaw().get_id()}`, source: resolver.get_id(), target: resolver.get_flaw().get_id(), stroke: stroke_style(resolver) } });
       for (const pre of resolver.get_preconditions())
         this.cy.add({ group: 'edges', data: { id: `${resolver.get_id()}-${pre.get_id()}`, source: resolver.get_id(), target: pre.get_id(), stroke: stroke_style(resolver) } });
     }
+
     if (c_flaw) {
       this.cy.$id(c_flaw.get_id().toString()).addClass('current');
       this.c_flaw = c_flaw;
     }
+
     if (c_resolver) {
       this.cy.$id(c_resolver.get_id().toString()).addClass('current');
       this.c_resolver = c_resolver;
@@ -105,10 +101,8 @@ export class SolverGraph extends Component<solver.Solver, HTMLDivElement> implem
   state_changed(state: solver.SolverState): void { }
 
   flaw_created(flaw: solver.graph.Flaw): void {
-    const fn = this.cy.add({ group: 'nodes', data: { id: flaw.get_id().toString(), type: 'flaw', label: flaw.to_string(), color: color(flaw), stroke: stroke_style(flaw) } });
-    this.tippys.set(flaw.get_id(), tippy(document.createElement('div'), { getReferenceClientRect: fn.popperRef().getBoundingClientRect, content: flaw.to_string(true) }));
-    fn.on('mouseover', () => this.tippys.get(flaw.get_id())!.show());
-    fn.on('mouseout', () => this.tippys.get(flaw.get_id())!.hide());
+    this.create_flaw_node(flaw);
+
     for (const cause of flaw.get_causes())
       this.cy.add({ group: 'edges', data: { id: `${flaw.get_id()}-${cause.get_id()}`, source: flaw.get_id(), target: cause.get_id(), stroke: stroke_style(flaw) } });
     this.cy.layout(this.layout).run();
@@ -130,10 +124,8 @@ export class SolverGraph extends Component<solver.Solver, HTMLDivElement> implem
   }
 
   resolver_created(resolver: solver.graph.Resolver): void {
-    const rn = this.cy.add({ group: 'nodes', data: { id: resolver.get_id().toString(), type: 'resolver', label: resolver.to_string(), color: color(resolver), stroke: stroke_style(resolver) } });
-    this.tippys.set(resolver.get_id(), tippy(document.createElement('div'), { getReferenceClientRect: rn.popperRef().getBoundingClientRect, content: resolver.to_string(true) }));
-    rn.on('mouseover', () => this.tippys.get(resolver.get_id())!.show());
-    rn.on('mouseout', () => this.tippys.get(resolver.get_id())!.hide());
+    this.create_resolver_node(resolver);
+
     this.cy.add({ group: 'edges', data: { id: `${resolver.get_id()}-${resolver.get_flaw().get_id()}`, source: resolver.get_id(), target: resolver.get_flaw().get_id(), stroke: stroke_style(resolver) } });
     this.cy.layout(this.layout).run();
   }
@@ -149,6 +141,50 @@ export class SolverGraph extends Component<solver.Solver, HTMLDivElement> implem
   }
 
   unmounting(): void { this.payload.remove_solver_listener(this); }
+
+  private create_flaw_node(flaw: solver.graph.Flaw): cytoscape.CollectionReturnValue {
+    const fn = this.cy.add({ group: 'nodes', data: { id: flaw.get_id().toString(), type: 'flaw', label: flaw.to_string(), color: color(flaw), stroke: stroke_style(flaw) } });
+    this.cy.on('mouseover', 'node', () => {
+      const popper = fn.popper({
+        content: () => {
+          const div = document.createElement('div');
+          div.innerHTML = flaw.to_string(true);
+          return div;
+        }
+      });
+      fn.scratch('popper', popper);
+    });
+    this.cy.on('mouseout', 'node', () => {
+      const popper = fn.scratch('popper');
+      if (popper) {
+        popper.destroy();
+        fn.removeScratch('popper');
+      }
+    });
+    return fn;
+  }
+
+  private create_resolver_node(resolver: solver.graph.Resolver): cytoscape.CollectionReturnValue {
+    const rn = this.cy.add({ group: 'nodes', data: { id: resolver.get_id().toString(), type: 'resolver', label: resolver.to_string(), color: color(resolver), stroke: stroke_style(resolver) } });
+    this.cy.on('mouseover', 'node', () => {
+      const popper = rn.popper({
+        content: () => {
+          const div = document.createElement('div');
+          div.innerHTML = resolver.to_string(true);
+          return div;
+        }
+      });
+      rn.scratch('popper', popper);
+    });
+    this.cy.on('mouseout', 'node', () => {
+      const popper = rn.scratch('popper');
+      if (popper) {
+        popper.destroy();
+        rn.removeScratch('popper');
+      }
+    });
+    return rn;
+  }
 }
 
 function color(flaw: solver.graph.Flaw | solver.graph.Resolver): string {

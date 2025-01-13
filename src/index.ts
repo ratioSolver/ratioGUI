@@ -1,10 +1,27 @@
+import { ComputePositionConfig } from '@floating-ui/dom';
+
+declare module 'cytoscape-popper' {
+
+  interface PopperOptions extends ComputePositionConfig {
+  }
+
+  interface PopperInstance {
+    update(): void;
+  }
+}
+
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 
 import cytoscape from 'cytoscape';
 import dagre from 'cytoscape-dagre';
-import cytoscapePopper, { RefElement } from 'cytoscape-popper';
-import tippy from 'tippy.js';
+import cytoscapePopper, { PopperInstance, PopperOptions, RefElement } from 'cytoscape-popper';
+import {
+  computePosition,
+  flip,
+  shift,
+  limitShift,
+} from '@floating-ui/dom';
 
 export * from './app';
 
@@ -17,35 +34,20 @@ export * from './solver/solver_components';
 
 export * from './utils/user_components';
 
-tippy.setDefaultProps({
-  arrow: false,
-  trigger: 'manual',
-  theme: 'light-border',
-  placement: 'bottom'
-});
+function popperFactory(ref: RefElement, content: HTMLElement, options?: PopperOptions): PopperInstance {
+  const popperOptions = { middleware: [flip(), shift({ limiter: limitShift() })], ...options, };
 
-function tippyFactory(ref: RefElement, content: HTMLElement) {
-  // Since tippy constructor requires DOM element/elements, create a placeholder
-  var dummyDomEle = document.createElement('div');
-
-  var tip = tippy(dummyDomEle, {
-    getReferenceClientRect: ref.getBoundingClientRect,
-    trigger: 'manual', // mandatory
-    // dom element inside the tippy:
-    content: content,
-    // your own preferences:
-    arrow: true,
-    placement: 'bottom',
-    hideOnClick: false,
-    sticky: "reference",
-
-    // if interactive:
-    interactive: true,
-    appendTo: document.body // or append dummyDomEle to document.body
-  });
-
-  return tip;
+  function update() {
+    computePosition(ref, content, popperOptions).then(({ x, y }) => {
+      Object.assign(content.style, {
+        left: `${x}px`,
+        top: `${y}px`,
+      });
+    });
+  }
+  update();
+  return { update };
 }
 
 cytoscape.use(dagre);
-cytoscape.use(cytoscapePopper(tippyFactory));
+cytoscape.use(cytoscapePopper(popperFactory));
