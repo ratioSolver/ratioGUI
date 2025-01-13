@@ -45,7 +45,7 @@ export class Connection {
 
     this.socket.onerror = (error) => {
       console.error('Connection error: ', error);
-      for (const listener of this.connection_listeners) { listener.error(error); }
+      for (const listener of this.connection_listeners) { listener.connection_error(error); }
     };
   }
 }
@@ -58,5 +58,5 @@ export interface ConnectionListener {
 
   disconnected(): void;
 
-  error(error: any): void;
+  connection_error(error: any): void;
 }

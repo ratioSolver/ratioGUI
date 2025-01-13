@@ -14,6 +14,8 @@ export class App implements AppListener {
     return App.instance;
   }
 
+  toast(info: string): void { for (const listener of this.app_listeners) { listener.toast(info); } }
+
   get_selected_component(): Component<any, HTMLElement> | null { return this.selected_comp; }
 
   selected_component(component: Component<any, HTMLElement> | null): void {
@@ -33,6 +35,8 @@ export class App implements AppListener {
 }
 
 export interface AppListener {
+
+  toast(info: string): void;
 
   selected_component(component: Component<any, HTMLElement> | null): void;
 }
@@ -140,7 +144,42 @@ export class AppComponent extends Component<App, HTMLDivElement> implements AppL
     this.main.classList.add('d-flex', 'flex-column', 'flex-grow-1');
     fragment.appendChild(this.main);
 
+    // Add the toast container..
+    const toast_container = document.createElement('div');
+    toast_container.classList.add('toast-container');
+    fragment.appendChild(toast_container);
+
     this.element.appendChild(fragment);
+  }
+
+  toast(info: string): void {
+    const toast_container = this.element.querySelector('.toast-container') as HTMLDivElement;
+    const toast = document.createElement('div');
+    toast.classList.add('toast');
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+    toast.setAttribute('data-bs-autohide', 'true');
+    toast.setAttribute('data-bs-delay', '5000');
+    const toast_header = document.createElement('div');
+    toast_header.classList.add('toast-header');
+    const toast_title = document.createElement('strong');
+    toast_title.classList.add('me-auto');
+    toast_title.innerText = 'Info';
+    toast_header.appendChild(toast_title);
+    const toast_button = document.createElement('button');
+    toast_button.classList.add('btn-close');
+    toast_button.setAttribute('type', 'button');
+    toast_button.setAttribute('data-bs-dismiss', 'toast');
+    toast_button.setAttribute('aria-label', 'Close');
+    toast_header.appendChild(toast_button);
+    toast.appendChild(toast_header);
+    const toast_body = document.createElement('div');
+    toast_body.classList.add('toast-body');
+    toast_body.innerText = info;
+    toast.appendChild(toast_body);
+    toast_container.appendChild(toast);
+    setTimeout(() => toast.remove(), 5000);
   }
 
   selected_component(component: Component<any, HTMLElement> | null): void {
@@ -151,7 +190,7 @@ export class AppComponent extends Component<App, HTMLDivElement> implements AppL
   connected(info: any): void { }
   received_message(message: any): void { }
   disconnected(): void { }
-  error(error: any): void { }
+  connection_error(error: any): void { }
 
   populate_navbar(container: HTMLDivElement): void { }
 
