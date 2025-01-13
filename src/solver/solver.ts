@@ -18,8 +18,7 @@ export namespace solver {
     remove_item_listener(listener: EnvListener) { this.env_listeners.delete(listener); }
 
     to_string(items: Map<number, values.Value>, expressive: boolean): string {
-      const pars = Array.from(this.items.entries()).filter(([name, _]) => name !== 'start' && name !== 'end' && name !== 'duration' && name !== 'tau').map(([name, value]) => `${name}: ${value.to_string(items, expressive)}`);
-      return `{${pars.join(', ')}}`;
+      return `{${Array.from(this.items.entries()).map(([name, value]) => `${name}: ${value.to_string(items, expressive)}`).join(', ')}}`;
     }
   }
 
@@ -191,6 +190,23 @@ export namespace solver {
       get_causes(): Resolver[] { return this.causes; }
       get_state(): State { return this.state; }
       get_cost(): number { return this.cost; }
+
+      to_string(expressive = false): string {
+        if (expressive)
+          switch (this.data.type) {
+            case 'atom':
+              return this.phi + ' ' + (this.data.atom!.is_fact ? 'fact' : 'goal') + ' ' + this.data.atom!.type.split(':').pop() + ' ' + this.cost;
+            default:
+              return this.phi;
+          }
+        else
+          switch (this.data.type) {
+            case 'atom':
+              return (this.data.atom!.is_fact ? 'fact' : 'goal') + ' ' + this.data.atom!.type.split(':').pop();
+            default:
+              return this.phi;
+          }
+      }
     }
 
     interface ResolverData {
@@ -231,6 +247,29 @@ export namespace solver {
         if (this.state == State.forbidden)
           return Infinity;
         return (this.preconditions.length ? Math.max.apply(null, this.preconditions.map(flaw => flaw.get_cost())) : 0) + this.intrinsic_cost;
+      }
+
+      to_string(expressive = false): string {
+        if (expressive)
+          switch (this.data.type) {
+            case 'activate_fact':
+            case 'activate_goal':
+              return this.rho + ' activate ' + this.get_cost();
+            case 'unify_atom':
+              return this.rho + ' unify ' + this.get_cost();
+            default:
+              return this.rho + ' ' + this.get_cost();
+          }
+        else
+          switch (this.data.type) {
+            case 'activate_fact':
+            case 'activate_goal':
+              return 'activate';
+            case 'unify_atom':
+              return 'unify';
+            default:
+              return this.rho;
+          }
       }
     }
   }
@@ -422,7 +461,7 @@ export namespace solver {
     export class Item extends Env implements Value {
 
       private id: number;
-      private type: string;
+      protected type: string;
       private name: string;
 
       constructor(id: number, type: string, name: string) {
@@ -433,7 +472,10 @@ export namespace solver {
       }
 
       to_string(items: Map<number, Value>, expressive = false): string {
-        return expressive ? this.name + ' ' + super.to_string(items, expressive) : this.name;
+        if (expressive)
+          return this.type.split(':').pop() + ' ' + this.name + super.to_string(items, expressive);
+        else
+          return this.name;
       }
     }
 
@@ -454,6 +496,17 @@ export namespace solver {
         this.is_fact = is_fact;
         this.sigma = sigma;
         this.state = state;
+      }
+
+      to_string(items: Map<number, Value>, expressive = false): string {
+        let pars = Array.from(this.items.entries());
+        if (!expressive)
+          pars = pars.filter(([name, _]) => name !== 'start' && name !== 'end' && name !== 'duration' && name !== 'tau');
+        const pars_str = pars.map(([name, value]) => `${name}: ${value.to_string(items, expressive)}`).join(', ');
+        if (expressive)
+          return this.sigma + ' ' + this.type.split(':').pop() + `(${pars_str})`;
+        else
+          return this.type.split(':').pop() + `(${pars_str})`;
       }
     }
 
@@ -486,5 +539,146 @@ export namespace solver {
     type Impulse = { at: values.InfRational };
     type Interval = { from: values.InfRational, to: values.InfRational };
     export type TimelineValue = Impulse | Interval;
+
+    export class Timeline<V extends TimelineValue> {
+
+      private id: string;
+      private name: string;
+      private values: V[];
+
+      constructor(id: string, name: string, values: V[]) {
+        this.id = id;
+        this.name = name;
+        this.values = values;
+      }
+
+      public get_name(): string { return this.name; }
+
+      public get_values(): V[] { return this.values; }
+    }
+
+    type SolverTimelineValue = values.Atom & (Impulse | Interval);
+
+    export class SolverTimeline extends Timeline<SolverTimelineValue> {
+
+      constructor(id: string, name: string, values: SolverTimelineValue[]) {
+        super(id, name, values);
+      }
+    }
+
+    type AgentTimelineValue = values.Atom & (Impulse | Interval);
+
+    export class AgentTimeline extends Timeline<AgentTimelineValue> {
+
+      constructor(id: string, name: string, values: AgentTimelineValue[]) {
+        super(id, name, values);
+      }
+    }
+
+    type StateVariableTimelineValue = { atoms: values.Atom[] } & Interval;
+
+    export class StateVariableTimeline extends Timeline<StateVariableTimelineValue> {
+
+      constructor(id: string, name: string, values: StateVariableTimelineValue[]) {
+        super(id, name, values);
+      }
+
+      static to_string(items: Map<number, values.Value>, value: StateVariableTimelineValue, expressive = false): string {
+        if (expressive)
+          switch (value.atoms.length) {
+            case 0:
+              return `[] (${value.from.to_string()} - ${value.to.to_string()})`;
+            case 1:
+              return value.atoms[0].to_string(items, expressive);
+            default:
+              return `[${value.atoms.map(atom => atom.to_string(items, expressive)).join(', ')}] (${value.from.to_string()} - ${value.to.to_string()})`;
+          }
+        else
+          switch (value.atoms.length) {
+            case 0:
+              return '[]';
+            case 1:
+              return value.atoms[0].to_string(items, expressive);
+            default:
+              return `[${value.atoms.map(atom => atom.to_string(items, expressive)).join(', ')}]`;
+          }
+      }
+    }
+
+    type ReusableResourceTimelineValue = { atoms: values.Atom[], usage: values.Rational } & Interval;
+
+    export class ReusableResourceTimeline extends Timeline<ReusableResourceTimelineValue> {
+
+      capacity: values.InfRational;
+
+      constructor(id: string, name: string, capacity: values.InfRational, values: ReusableResourceTimelineValue[]) {
+        super(id, name, values);
+        this.capacity = capacity;
+      }
+
+      static to_string(items: Map<number, values.Value>, value: ReusableResourceTimelineValue, expressive = false): string {
+        if (expressive)
+          switch (value.atoms.length) {
+            case 0:
+              return `0 (${value.from.to_string()} - ${value.to.to_string()})`;
+            case 1:
+              return value.usage.to_string() + ' ' + value.atoms[0].to_string(items, expressive);
+            default:
+              return value.usage.to_string() + ` {${value.atoms.map(atom => atom.to_string(items, expressive)).join(', ')}} (${value.from.to_string()} - ${value.to.to_string()})`;
+          }
+        else
+          return value.usage.to_string();
+      }
+    }
+
+    type ConsumableResourceTimelineValue = { atoms: values.Atom[], start: values.InfRational, end: values.InfRational } & Interval;
+
+    export class ConsumableResourceTimeline extends Timeline<ConsumableResourceTimelineValue> {
+
+      capacity: values.InfRational;
+      initial_amount: values.InfRational;
+
+      constructor(id: string, name: string, capacity: values.InfRational, initial_amount: values.InfRational, values: ConsumableResourceTimelineValue[]) {
+        super(id, name, values);
+        this.capacity = capacity;
+        this.initial_amount = initial_amount;
+      }
+
+      static to_string(items: Map<number, values.Value>, value: ConsumableResourceTimelineValue, expressive = false): string {
+        if (expressive)
+          switch (value.atoms.length) {
+            case 0:
+              return `- (${value.from.to_string()} - ${value.to.to_string()})`;
+            case 1:
+              return `${value.start.to_string()} - ${value.end.to_string()} ${value.atoms[0].to_string(items, expressive)}`;
+            default:
+              return `${value.start.to_string()} - ${value.end.to_string()} {${value.atoms.map(atom => atom.to_string(items, expressive)).join(', ')}} (${value.from.to_string()} - ${value.to.to_string()})`;
+          }
+        else
+          switch (value.atoms.length) {
+            case 0:
+              return '-';
+            default:
+              return `${value.start.to_string()} - ${value.end.to_string()}`;
+          }
+      }
+    }
+
+    export function make_timeline(timeline: any, atoms: Map<number, values.Atom>): Timeline<TimelineValue> {
+      switch (timeline.type) {
+        case 'Solver':
+          return new SolverTimeline(timeline.id, timeline.name, timeline.values.map((value: number) => atoms.get(value)));
+        case 'Agent':
+          return new AgentTimeline(timeline.id, timeline.name, timeline.values.map((value: number) => atoms.get(value)));
+        case 'StateVariable':
+          return new StateVariableTimeline(timeline.id, timeline.name, timeline.values.map((value: any) => { return { from: values.InfRational.make_inf_rational(value.from), to: values.InfRational.make_inf_rational(value.to), atoms: value.atoms.map((atom: any) => atoms.get(atom)) }; }));
+        case 'ReusableResource':
+          return new ReusableResourceTimeline(timeline.id, timeline.name, values.InfRational.make_inf_rational(timeline.capacity), timeline.values.map((value: any) => { return { from: values.InfRational.make_inf_rational(value.from), to: values.InfRational.make_inf_rational(value.to), atoms: value.atoms.map((atom: any) => atoms.get(atom)), usage: values.InfRational.make_inf_rational(value.usage) }; }));
+        case 'ConsumableResource':
+          return new ConsumableResourceTimeline(timeline.id, timeline.name, values.InfRational.make_inf_rational(timeline.capacity), values.InfRational.make_inf_rational(timeline.initial_amount), timeline.values.map((value: any) => { return { from: values.InfRational.make_inf_rational(value.from), to: values.InfRational.make_inf_rational(value.to), atoms: value.atoms.map((atom: any) => atoms.get(atom)), start: values.InfRational.make_inf_rational(value.start), end: values.InfRational.make_inf_rational(value.end) }; }));
+        default:
+          throw new Error(`Unknown timeline type: ${timeline.type}`);
+      }
+    }
   }
 }
